@@ -1481,6 +1481,8 @@
     async function sync() {
         if (Date.now() - lastSave < 15000)
             return;
+        if (modal)
+            return; // never sync-render while a modal is open — would wipe user input
         try {
             const data = await fbGet('/');
             if (!data)
