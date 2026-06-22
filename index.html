@@ -1421,40 +1421,6 @@
             showSync('Offline — using local data', '#C9507A');
         }
 
-        // ── Handle incoming link from Gig Dashboard ───────────────────────────────
-        try {
-            const _params = new URLSearchParams(window.location.search);
-            const _dashId = _params.get('gig') || '';
-            const _dashDate = _params.get('date') || '';
-            const _dashEvent = _params.get('event') || '';
-            const _dashName = _params.get('name') || '';
-
-            if (_dashId) {
-                const _existing = G.find(function(g) {
-                    return g.dashboardId === _dashId;
-                });
-                if (_existing) {
-                    gid = _existing.id;
-                    view = 'gig';
-                } else {
-                    var _gigName = _dashEvent
-                    ? _dashEvent + (_dashName ? ' — ' + _dashName : '')
-                    : (_dashName || 'New Gig');
-                    gF = {
-                        name: _gigName,
-                        date: _dashDate,
-                        client: _dashName,
-                        notes: '',
-                        _dashboardId: _dashId
-                    };
-                    gEid = null;
-                    modal = 'g';
-                }
-            }
-        } catch (e) {
-            console.warn('Dashboard param handling error:', e);
-        }
-
         render();
         setInterval(sync, 20000);
     }
@@ -2031,7 +1997,8 @@
                         ...ng
                     } : g);
                 else {
-                    const _did = (gF && gF._dashboardId) || null;
+                    var _did = window._pendingDashId || null;
+                    window._pendingDashId = null;
                     const newg = {
                         id: uid(),
                         ...ng,
@@ -2186,7 +2153,46 @@
         }
     });
 
-    load();
+    load().then(function() {
+        // Handle incoming link from Gig Dashboard
+        var search = window.location.search;
+        if (!search)
+            return;
+        var dashId = new URLSearchParams(search).get('gig');
+        var dashDate = new URLSearchParams(search).get('date') || '';
+        var dashEvent = new URLSearchParams(search).get('event') || '';
+        var dashName = new URLSearchParams(search).get('name') || '';
+        if (!dashId)
+            return;
+
+        var existing = null;
+        for (var i = 0; i < G.length; i++) {
+            if (G[i].dashboardId === dashId) {
+                existing = G[i];
+                break;
+            }
+        }
+
+        if (existing) {
+            gid = existing.id;
+            view = 'gig';
+            render();
+        } else {
+            var gigName = dashEvent
+            ? dashEvent + (dashName ? ' - ' + dashName : '')
+            : (dashName || 'New Gig');
+            gF = {
+                name: gigName,
+                date: dashDate,
+                client: dashName,
+                notes: ''
+            };
+            window._pendingDashId = dashId;
+            gEid = null;
+            modal = 'g';
+            render();
+        }
+    });
     </script>
 </body>
 </html>
