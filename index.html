@@ -1331,6 +1331,16 @@
     ];
 
     // App State
+    // Global error handler — prevents blank screen
+    window.onerror = function(msg, src, line, col, err) {
+        console.error('Repertoire error:', msg, 'line', line);
+        var app = document.getElementById('app');
+        if (app && !app.innerHTML.trim()) {
+            app.innerHTML = '<div style="padding:40px;color:#F0EDE6;font-family:sans-serif"><h2 style="color:#C9A047">Something went wrong</h2><p style="color:#9CA3AF">' + msg + '</p><button onclick="window.location.href=window.location.pathname" style="background:#C9A047;color:#000;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:14px;font-weight:600">Reload App</button></div>';
+        }
+        return true;
+    };
+
     let R = [],
         G = [],
         view = 'master',
