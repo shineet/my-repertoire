@@ -1679,7 +1679,6 @@
 
     // Modals
     function rModal() {
-        syncGFFromDOM(); // preserve typed values
         const ov = document.getElementById('ov');
         if (!modal) {
             ov.style.display = 'none';
@@ -1835,22 +1834,23 @@
     }
 
     function syncGFFromDOM() {
-        // Save whatever is currently typed in the gig form back to gF state
-        // so re-renders don't wipe user input
-        if (modal === 'g') {
+        // Only sync when the gig form is actually open and elements exist in DOM
+        try {
+            if (modal !== 'g')
+                return;
             var n = document.getElementById('gf-name');
             var d = document.getElementById('gf-date');
             var c = document.getElementById('gf-client');
             var nt = document.getElementById('gf-notes');
-            if (n)
+            if (n && n.value !== undefined)
                 gF.name = n.value;
-            if (d)
+            if (d && d.value !== undefined)
                 gF.date = d.value;
-            if (c)
+            if (c && c.value !== undefined)
                 gF.client = c.value;
-            if (nt)
+            if (nt && nt.value !== undefined)
                 gF.notes = nt.value;
-        }
+        } catch (e) {}
     }
 
     function render() {
@@ -1891,10 +1891,14 @@
         switch (a) {
         case 'nav-master':
             view = 'master';
+            modal = null;
+            document.getElementById('ov').innerHTML = '';
             render();
             break;
         case 'nav-gigs':
             view = 'gigs';
+            modal = null;
+            document.getElementById('ov').innerHTML = '';
             render();
             break;
         case 'open-detail':
@@ -2209,11 +2213,13 @@
             }
         }
 
-        if (existing) {
+        if (existing && existing.name) {
+            // Valid existing gig — open it
             gid = existing.id;
             view = 'gig';
             render();
         } else {
+            // No valid gig found — clear any stale match and create fresh
             var gigName = dashEvent
             ? dashEvent + (dashName ? ' - ' + dashName : '')
             : (dashName || 'New Gig');
