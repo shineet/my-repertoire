@@ -1422,35 +1422,37 @@
         }
 
         // ── Handle incoming link from Gig Dashboard ───────────────────────────────
-        const _params = new URLSearchParams(window.location.search);
-        const _dashId = _params.get('gig');
-        const _dashDate = _params.get('date') || '';
-        const _dashEvent = _params.get('event') || '';
-        const _dashName = _params.get('name') || '';
+        try {
+            const _params = new URLSearchParams(window.location.search);
+            const _dashId = _params.get('gig') || '';
+            const _dashDate = _params.get('date') || '';
+            const _dashEvent = _params.get('event') || '';
+            const _dashName = _params.get('name') || '';
 
-        if (_dashId) {
-            // Look for existing gig linked to this dashboard client
-            const _existing = G.find(g => g.dashboardId === _dashId);
-            if (_existing) {
-                // Already exists — open it directly
-                gid = _existing.id;
-                view = 'gig';
-            } else {
-                // First time — pre-fill create form and open it automatically
-                const _gigName = _dashEvent
-                ? _dashEvent + (_dashName ? ' — ' + _dashName : '')
-                : _dashName || 'New Gig';
-                gF = {
-                    name: _gigName,
-                    date: _dashDate,
-                    client: _dashName,
-                    notes: '',
-                    _dashboardId: _dashId,
-                };
-                // stash so save-g can attach it
-                gEid = null;
-                modal = 'g';
+            if (_dashId) {
+                const _existing = G.find(function(g) {
+                    return g.dashboardId === _dashId;
+                });
+                if (_existing) {
+                    gid = _existing.id;
+                    view = 'gig';
+                } else {
+                    var _gigName = _dashEvent
+                    ? _dashEvent + (_dashName ? ' — ' + _dashName : '')
+                    : (_dashName || 'New Gig');
+                    gF = {
+                        name: _gigName,
+                        date: _dashDate,
+                        client: _dashName,
+                        notes: '',
+                        _dashboardId: _dashId
+                    };
+                    gEid = null;
+                    modal = 'g';
+                }
             }
+        } catch (e) {
+            console.warn('Dashboard param handling error:', e);
         }
 
         render();
@@ -2029,7 +2031,7 @@
                         ...ng
                     } : g);
                 else {
-                    const _did = gF?._dashboardId || null;
+                    const _did = (gF && gF._dashboardId) || null;
                     const newg = {
                         id: uid(),
                         ...ng,
