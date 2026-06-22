@@ -1841,7 +1841,11 @@
             setTimeout(() => {
                 const pk = document.getElementById('pk-q');
                 if (pk) {
+                    pk.value = pQ; // restore current search value after re-render
                     pk.focus();
+                    // place cursor at end
+                    const len = pk.value.length;
+                    pk.setSelectionRange(len, len);
                     pk.oninput = e => {
                         pQ = e.target.value;
                         rModal();
