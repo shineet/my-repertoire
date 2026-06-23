@@ -1539,6 +1539,26 @@
     // Master list view
     var _mExp = {}; // expanded state for master list
 
+    function editRoutine(id) {
+        var r = R.find(function(x) {
+            return x.id === id;
+        });
+        if (!r)
+            return;
+        rF = {
+            name: r.name,
+            duration: r.duration,
+            difficulty: r.difficulty,
+            status: r.status,
+            roles: [...r.roles],
+            contexts: [...r.contexts],
+            notes: r.notes
+        };
+        rEid = id;
+        modal = 'r';
+        render();
+    }
+
     async function mvMaster(id, dir) {
         var i = R.findIndex(function(r) {
             return r.id === id;
@@ -1596,7 +1616,7 @@
             + '<span style="font-size:12px;color:#888CAA;">⏱ ' + fmt(r.duration) + '</span>'
             + '<span style="font-size:11px;color:#555E7A;">' + esc(r.difficulty) + '</span>'
             + bdg(r.status, SC[r.status] || '#888CAA', true)
-            + '<button data-a="edit-from-detail" data-id="' + r.id + '" style="background:#1E2140;border:none;color:#C9A047;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;" onclick="event.stopPropagation()">Edit</button>'
+            + '<button onclick="event.stopPropagation();editRoutine(\'' + r.id + '\')" style="background:#1E2140;border:none;color:#C9A047;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;">Edit</button>'
             + '</div>'
             + '</div>';
             var notes = exp
