@@ -1537,6 +1537,8 @@
     }
 
     // Master list view
+    var _mExp = {}; // expanded state for master list
+
     function rMaster() {
         const fil = R.filter(r => {
             if (stF !== 'All' && r.status !== stF)
@@ -1549,50 +1551,81 @@
                 return false;
             return true;
         });
-        const dRows = fil.map((r, i) => `<div data-a="open-detail" data-id="${r.id}" class="desk-row" style="${GCOL}padding:10px 16px;align-items:center;border-bottom:${i < fil.length - 1 ? '1px solid #1E2140' : 'none'};" data-hov="1">
-    <div style="font-weight:500;">${esc(r.name)}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:3px;">${r.contexts.map(c => bdg(c, CC[c], true)).join('')}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:3px;">${r.roles.map(rl => bdg(rl, RC[rl], true)).join('')}</div>
-    <div style="font-size:13px;color:#888CAA;">${fmt(r.duration)}</div>
-    <div style="font-size:12px;color:#555E7A;">${esc(r.difficulty)}</div>
-    <div>${bdg(r.status, SC[r.status] || '#888CAA', true)}</div>
-  </div>`
-        ).join('');
-        const mCards = fil.map(r => `<div data-a="open-detail" data-id="${r.id}" class="mob-card" style="background:#161829;border-radius:10px;border:1px solid #1E2140;padding:14px;margin-bottom:10px;cursor:pointer;">
-    <div style="font-weight:600;font-size:15px;margin-bottom:8px;">${esc(r.name)}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${r.contexts.map(c => bdg(c, CC[c], true)).join('')}${r.roles.map(rl => bdg(rl, RC[rl], true)).join('')}</div>
-    <div style="display:flex;gap:12px;align-items:center;">${bdg(r.status, SC[r.status] || '#888CAA', true)}<span style="font-size:12px;color:#888CAA;">⏱ ${fmt(r.duration)}</span><span style="font-size:11px;color:#555E7A;">${esc(r.difficulty)}</span></div>
-  </div>`
-        ).join('');
-        return `<div style="padding:14px 20px;">
-    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;align-items:center;">
-      <span style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;">Context</span>
-      ${
 
-        CTX.map(c => chip(c, CC[c], cxF.includes(c), `data-a="tog-cx" data-v="${esc(c)}"`)).join('')}
-      <div style="width:1px;height:16px;background:#1E2140;margin:0 2px;"></div>
-      <span style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;">Role</span>
-      ${
+        const rows = fil.map(function(r) {
+            const exp = !!_mExp[r.id];
+            return '<div style="background:#161829;border-radius:10px;border:1px solid ' + (exp ? '#2E3260' : '#1E2140') + ';margin-bottom:8px;overflow:hidden;">'
 
-        ROLES.map(r => chip(r, RC[r], roF.includes(r), `data-a="tog-ro" data-v="${esc(r)}"`)).join('')}
-    </div>
-    <div style="display:flex;gap:5px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
-      <input id="srch" value="${
+            + // Main row
+            '<div data-a="toggle-mexp" data-id="' + r.id + '" style="display:flex;align-items:center;gap:0;padding:12px 14px;cursor:pointer;">'
 
-        esc(q)}" placeholder="Search…" style="background:#0F1120;border:1px solid #1E2140;border-radius:8px;padding:7px 12px;color:#F0EDE6;font-size:13px;outline:none;width:160px;font-family:inherit;">
-      ${['All', 'Active', 'In Development', 'Retired'].map(s => chip(s, '', stF === s, `data-a="tog-st" data-v="${esc(s)}"`)).join('')}
-      <span style="margin-left:auto;color:#555E7A;font-size:12px;">${fil.length} shown</span>
-    </div>
-    <div class="desk-table" style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">
-      <div class="desk-row" style="${
+            + // Expand arrow
+            '<span style="font-size:12px;color:#555E7A;margin-right:10px;flex-shrink:0;display:inline-block;transition:transform .15s;transform:' + (exp ? 'rotate(90deg)' : 'rotate(0deg)') + ';padding:2px;">▶</span>'
 
-        GCOL}background:#161829;border-bottom:1px solid #1E2140;padding:8px 16px;">${['Routine (tap for full notes)', 'Context', 'Role', 'Time', 'Difficulty', 'Status'].map(h => `<div style="${TH}">${h}</div>`).join('')}</div>
-      ${fil.length ? dRows : `<div style="padding:40px 0;text-align:center;color:#555E7A;">No routines match your filters.</div>`}
-    </div>
-    <div>${
-        fil.length ? mCards : `<div style="padding:40px 0;text-align:center;color:#555E7A;">No routines match.</div>`}</div>
-  </div>`
-        ;
+            + // Name + tags
+            '<div style="flex:1;min-width:0;">'
+            + '<div style="font-weight:600;font-size:15px;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(r.name) + '</div>'
+            + '<div style="display:flex;gap:4px;flex-wrap:wrap;">'
+            + r.contexts.map(function(c) {
+                return bdg(c, CC[c], true);
+            }).join('')
+            + r.roles.map(function(rl) {
+                return bdg(rl, RC[rl], true);
+            }).join('')
+            + '</div>'
+            + '</div>'
+
+            + // Right side meta
+            '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:12px;">'
+            + '<span style="font-size:12px;color:#888CAA;">⏱ ' + fmt(r.duration) + '</span>'
+            + '<span style="font-size:11px;color:#555E7A;">' + esc(r.difficulty) + '</span>'
+            + bdg(r.status, SC[r.status] || '#888CAA', true)
+            + '<button data-a="edit-from-detail" data-id="' + r.id + '" style="background:#1E2140;border:none;color:#C9A047;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;" onclick="event.stopPropagation()">Edit</button>'
+            + '</div>'
+            + '</div>'
+
+            + (// Expanded notes
+            exp
+            ? '<div style="border-top:1px solid #1E2140;padding:14px 16px 16px 36px;background:#0F1120;">'
+            + (r.notes
+            ? '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Notes & Method</div>'
+            + '<div style="font-size:13px;color:#888CAA;line-height:1.75;white-space:pre-wrap;font-family:inherit;">' + esc(r.notes) + '</div>'
+            : '<div style="font-size:13px;color:#555E7A;font-style:italic;">No notes for this routine.</div>')
+            + '</div>'
+            : '')
+            + '</div>';
+        }).join('');
+
+        const anyExp = Object.keys(_mExp).some(function(k) {
+            return _mExp[k];
+        });
+
+        return '<div style="padding:14px 20px;">'
+
+        + // Filters
+        '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;align-items:center;">'
+        + '<span style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;">Context</span>'
+        + CTX.map(function(c) {
+            return chip(c, CC[c], cxF.includes(c), 'data-a="tog-cx" data-v="' + esc(c) + '"');
+        }).join('')
+        + '<div style="width:1px;height:16px;background:#1E2140;margin:0 2px;"></div>'
+        + '<span style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;">Role</span>'
+        + ROLES.map(function(r) {
+            return chip(r, RC[r], roF.includes(r), 'data-a="tog-ro" data-v="' + esc(r) + '"');
+        }).join('')
+        + '</div>'
+        + '<div style="display:flex;gap:5px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">'
+        + '<input id="srch" value="' + esc(q) + '" placeholder="Search…" style="background:#0F1120;border:1px solid #1E2140;border-radius:8px;padding:7px 12px;color:#F0EDE6;font-size:13px;outline:none;width:160px;font-family:inherit;">'
+        + ['All', 'Active', 'In Development', 'Retired'].map(function(s) {
+            return chip(s, '', stF === s, 'data-a="tog-st" data-v="' + esc(s) + '"');
+        }).join('')
+        + '<span style="margin-left:auto;color:#555E7A;font-size:12px;">' + fil.length + ' shown</span>'
+        + '<button onclick="' + (anyExp ? '_mExp={};' : 'fil.forEach(function(r){_mExp[r.id]=true;});') + 'render()" style="background:#1E2140;border:none;color:#888CAA;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">' + (anyExp ? '⊟ Collapse All' : '⊞ Expand All') + '</button>'
+        + '</div>'
+        + (fil.length
+        ? rows
+        : '<div style="padding:40px 0;text-align:center;color:#555E7A;">No routines match your filters.</div>')
+        + '</div>';
     }
 
     // Gigs list view
@@ -2147,6 +2180,10 @@
             break;
         case 'toggle-expand':
             _expanded[id] = !_expanded[id];
+            render();
+            break;
+        case 'toggle-mexp':
+            _mExp[id] = !_mExp[id];
             render();
             break;
         case 'del-g':
