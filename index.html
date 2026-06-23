@@ -1682,6 +1682,7 @@
         const ov = document.getElementById('ov');
         if (!modal) {
             ov.style.display = 'none';
+            ov.innerHTML = '';
             return;
         }
         ov.style.display = 'flex';
@@ -1892,13 +1893,11 @@
         case 'nav-master':
             view = 'master';
             modal = null;
-            document.getElementById('ov').innerHTML = '';
             render();
             break;
         case 'nav-gigs':
             view = 'gigs';
             modal = null;
-            document.getElementById('ov').innerHTML = '';
             render();
             break;
         case 'open-detail':
