@@ -1685,11 +1685,12 @@
             + // ── Main row
             '<div style="display:flex;align-items:center;gap:0;padding:12px 14px;">'
 
-            + // Drag handle
-            '<div class="sl-drag" data-rid="' + r.id + '" title="Drag to reorder" style="cursor:grab;color:#2E3260;font-size:18px;padding:0 10px 0 0;user-select:none;flex-shrink:0;">☰</div>'
-
-            + // Number
-            '<span style="font-size:12px;color:#555E7A;font-weight:700;min-width:22px;">' + (i + 1) + '</span>'
+            + // Up/Down arrows + number
+            '<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;margin-right:8px;">'
+            + (i > 0 ? '<button data-a="mv-up" data-id="' + r.id + '" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▲</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▲</span>')
+            + '<span style="font-size:11px;color:#555E7A;font-weight:700;">' + (i + 1) + '</span>'
+            + (i < grs.length - 1 ? '<button data-a="mv-dn" data-id="' + r.id + '" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▼</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▼</span>')
+            + '</div>'
 
             + // Expand toggle + name
             '<div data-a="toggle-expand" data-id="' + r.id + '" style="flex:1;cursor:pointer;padding:0 10px;">'
@@ -1744,101 +1745,6 @@
         + '</div>'
         + (grs.length ? toolbar + '<div id="sl-list">' + rows + '</div>' : emptyState)
         + '</div>';
-    }
-
-    // ── Drag-and-drop for setlist ─────────────────────────────────────────────────
-    var _drag = {
-        el: null,
-        startY: 0,
-        startIdx: 0,
-        clone: null
-    };
-
-    function initDrag() {
-        var list = document.getElementById('sl-list');
-        if (!list)
-            return;
-        list.querySelectorAll('.sl-drag').forEach(function(handle) {
-            handle.addEventListener('mousedown', onDragStart);
-            handle.addEventListener('touchstart', onDragStart, {
-                passive: false
-            });
-        });
-    }
-
-    function onDragStart(e) {
-        e.preventDefault();
-        var row = e.currentTarget.closest('.sl-row');
-        if (!row)
-            return;
-        _drag.el = row;
-        _drag.rid = row.dataset.rid;
-        _drag.startY = e.touches ? e.touches[0].clientY : e.clientY;
-        _drag.list = document.getElementById('sl-list');
-        _drag.rows = Array.from(_drag.list.querySelectorAll('.sl-row'));
-        _drag.startIdx = _drag.rows.indexOf(row);
-
-        // Style dragging row
-        row.style.opacity = '0.4';
-        row.style.border = '1px solid #C9A047';
-
-        document.addEventListener('mousemove', onDragMove);
-        document.addEventListener('touchmove', onDragMove, {
-            passive: false
-        });
-        document.addEventListener('mouseup', onDragEnd);
-        document.addEventListener('touchend', onDragEnd);
-    }
-
-    function onDragMove(e) {
-        if (!_drag.el)
-            return;
-        e.preventDefault();
-        var y = e.touches ? e.touches[0].clientY : e.clientY;
-        var rows = Array.from(_drag.list.querySelectorAll('.sl-row'));
-        rows.forEach(function(r) {
-            if (r === _drag.el)
-                return;
-            var rect = r.getBoundingClientRect();
-            var mid = rect.top + rect.height / 2;
-            if (y < mid) {
-                _drag.list.insertBefore(_drag.el, r);
-            }
-        });
-    }
-
-    async function onDragEnd() {
-        if (!_drag.el)
-            return;
-        _drag.el.style.opacity = '';
-        _drag.el.style.border = '';
-
-        // Read new order from DOM
-        var newOrder = Array.from(_drag.list.querySelectorAll('.sl-row')).map(function(r) {
-            return r.dataset.rid;
-        });
-        var g = cg();
-        if (g) {
-            G = G.map(function(x) {
-                return x.id === gid ? Object.assign({}, x, {
-                    routineIds: newOrder
-                }) : x;
-            });
-            await save();
-            render();
-        }
-
-        document.removeEventListener('mousemove', onDragMove);
-        document.removeEventListener('touchmove', onDragMove);
-        document.removeEventListener('mouseup', onDragEnd);
-        document.removeEventListener('touchend', onDragEnd);
-        _drag = {
-            el: null,
-            startY: 0,
-            rid: null,
-            list: null,
-            rows: null
-        };
     }
 
     // Modals
@@ -2041,8 +1947,6 @@
                 q = e.target.value;
                 render();
             };
-        if (view === 'gig')
-            initDrag();
     }
 
     // Close modal clicking backdrop
