@@ -1557,7 +1557,17 @@
             return '<div style="background:#161829;border-radius:10px;border:1px solid ' + (exp ? '#2E3260' : '#1E2140') + ';margin-bottom:8px;overflow:hidden;">'
 
             + // Main row
-            '<div data-a="toggle-mexp" data-id="' + r.id + '" style="display:flex;align-items:center;gap:0;padding:12px 14px;cursor:pointer;">'
+            '<div style="display:flex;align-items:center;gap:0;padding:12px 14px;">'
+
+            + // Up/Down arrows
+            '<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;margin-right:8px;" onclick="event.stopPropagation()">'
+            + (fil.indexOf(r) > 0 ? '<button data-a="mv-up-m" data-id="' + r.id + '" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▲</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▲</span>')
+            + '<span style="font-size:11px;color:#555E7A;font-weight:700;">' + (fil.indexOf(r) + 1) + '</span>'
+            + (fil.indexOf(r) < fil.length - 1 ? '<button data-a="mv-dn-m" data-id="' + r.id + '" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▼</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▼</span>')
+            + '</div>'
+
+            + // Expand toggle (rest of row)
+            '<div data-a="toggle-mexp" data-id="' + r.id + '" style="display:flex;align-items:center;gap:0;flex:1;cursor:pointer;">'
 
             + // Expand arrow
             '<span style="font-size:12px;color:#555E7A;margin-right:10px;flex-shrink:0;display:inline-block;transition:transform .15s;transform:' + (exp ? 'rotate(90deg)' : 'rotate(0deg)') + ';padding:2px;">▶</span>'
@@ -2279,6 +2289,26 @@
             else
                 render();
             break;
+        case 'mv-up-m':
+            {
+                const i = R.findIndex(r => r.id === id);
+                if (i <= 0)
+                    break;
+                [R[i - 1], R[i]] = [R[i], R[i - 1]];
+                await save();
+                render();
+                break;
+            }
+        case 'mv-dn-m':
+            {
+                const i = R.findIndex(r => r.id === id);
+                if (i < 0 || i >= R.length - 1)
+                    break;
+                [R[i], R[i + 1]] = [R[i + 1], R[i]];
+                await save();
+                render();
+                break;
+            }
         case 'mv-up':
             {
                 const g = cg();
