@@ -1890,11 +1890,14 @@
     // All event handling
     document.getElementById('app').addEventListener('click', async function(e) {
         const el = e.target.closest('[data-a]');
-        if (!el)
+        if (!el) {
+            console.log('click: no data-a found on', e.target.tagName, e.target.className);
             return;
+        }
         const a = el.dataset.a,
             id = el.dataset.id,
             v = el.dataset.v;
+        console.log('click action:', a);
         switch (a) {
         case 'nav-master':
             view = 'master';
