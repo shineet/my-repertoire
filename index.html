@@ -1856,6 +1856,12 @@
 
     function render() {
         syncGFFromDOM(); // preserve any typed values before re-rendering
+        // Always force-hide the overlay first so it never blocks clicks
+        var _ov = document.getElementById('ov');
+        if (!modal && _ov) {
+            _ov.style.display = 'none';
+            _ov.innerHTML = '';
+        }
         let main = '';
         if (view === 'master')
             main = rMaster();
