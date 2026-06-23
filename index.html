@@ -1539,6 +1539,22 @@
     // Master list view
     var _mExp = {}; // expanded state for master list
 
+    async function mvMaster(id, dir) {
+        var i = R.findIndex(function(r) {
+            return r.id === id;
+        });
+        if (i < 0)
+            return;
+        var j = i + dir;
+        if (j < 0 || j >= R.length)
+            return;
+        var tmp = R[i];
+        R[i] = R[j];
+        R[j] = tmp;
+        await save();
+        render();
+    }
+
     function rMaster() {
         const fil = R.filter(r => {
             if (stF !== 'All' && r.status !== stF)
@@ -1553,28 +1569,19 @@
         });
 
         const rows = fil.map(function(r) {
-            const exp = !!_mExp[r.id];
-            return '<div style="background:#161829;border-radius:10px;border:1px solid ' + (exp ? '#2E3260' : '#1E2140') + ';margin-bottom:8px;overflow:hidden;">'
-
-            + // Main row
-            '<div style="display:flex;align-items:center;gap:0;padding:12px 14px;">'
-
-            + // Up/Down arrows
-            '<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;margin-right:8px;" onclick="event.stopPropagation()">'
-            + (fil.indexOf(r) > 0 ? '<button data-a="mv-up-m" data-id="' + r.id + '" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▲</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▲</span>')
-            + '<span style="font-size:11px;color:#555E7A;font-weight:700;">' + (fil.indexOf(r) + 1) + '</span>'
-            + (fil.indexOf(r) < fil.length - 1 ? '<button data-a="mv-dn-m" data-id="' + r.id + '" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▼</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▼</span>')
+            var exp = !!_mExp[r.id];
+            var ridx = fil.indexOf(r);
+            var header = ''
+            + '<div style="display:flex;align-items:center;padding:12px 14px;gap:8px;">'
+            + '<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;margin-right:4px;">'
+            + (ridx > 0 ? '<button onclick="event.stopPropagation();mvMaster(\'' + r.id + '\',-1)" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▲</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▲</span>')
+            + '<span style="font-size:11px;color:#555E7A;font-weight:700;">' + (ridx + 1) + '</span>'
+            + (ridx < fil.length - 1 ? '<button onclick="event.stopPropagation();mvMaster(\'' + r.id + '\',1)" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▼</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▼</span>')
             + '</div>'
-
-            + // Expand toggle (rest of row)
-            '<div data-a="toggle-mexp" data-id="' + r.id + '" style="display:flex;align-items:center;gap:0;flex:1;cursor:pointer;">'
-
-            + // Expand arrow
-            '<span style="font-size:12px;color:#555E7A;margin-right:10px;flex-shrink:0;display:inline-block;transition:transform .15s;transform:' + (exp ? 'rotate(90deg)' : 'rotate(0deg)') + ';padding:2px;">▶</span>'
-
-            + // Name + tags
-            '<div style="flex:1;min-width:0;">'
-            + '<div style="font-weight:600;font-size:15px;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(r.name) + '</div>'
+            + '<div data-a="toggle-mexp" data-id="' + r.id + '" style="flex:1;min-width:0;cursor:pointer;display:flex;align-items:center;gap:8px;">'
+            + '<span style="font-size:12px;color:#555E7A;flex-shrink:0;display:inline-block;transform:' + (exp ? 'rotate(90deg)' : 'rotate(0deg)') + ';transition:transform .15s;">▶</span>'
+            + '<div style="min-width:0;">'
+            + '<div style="font-weight:600;font-size:15px;margin-bottom:5px;">' + esc(r.name) + '</div>'
             + '<div style="display:flex;gap:4px;flex-wrap:wrap;">'
             + r.contexts.map(function(c) {
                 return bdg(c, CC[c], true);
@@ -1584,26 +1591,24 @@
             }).join('')
             + '</div>'
             + '</div>'
-
-            + // Right side meta
-            '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:12px;">'
+            + '</div>'
+            + '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">'
             + '<span style="font-size:12px;color:#888CAA;">⏱ ' + fmt(r.duration) + '</span>'
             + '<span style="font-size:11px;color:#555E7A;">' + esc(r.difficulty) + '</span>'
             + bdg(r.status, SC[r.status] || '#888CAA', true)
             + '<button data-a="edit-from-detail" data-id="' + r.id + '" style="background:#1E2140;border:none;color:#C9A047;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;" onclick="event.stopPropagation()">Edit</button>'
             + '</div>'
-            + '</div>'
-
-            + (// Expanded notes
-            exp
-            ? '<div style="border-top:1px solid #1E2140;padding:14px 16px 16px 36px;background:#0F1120;">'
+            + '</div>';
+            var notes = exp
+            ? '<div style="border-top:1px solid #1E2140;padding:14px 16px 16px 52px;background:#0F1120;">'
             + (r.notes
-            ? '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Notes & Method</div>'
+            ? '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Notes &amp; Method</div>'
             + '<div style="font-size:13px;color:#888CAA;line-height:1.75;white-space:pre-wrap;font-family:inherit;">' + esc(r.notes) + '</div>'
             : '<div style="font-size:13px;color:#555E7A;font-style:italic;">No notes for this routine.</div>')
             + '</div>'
-            : '')
-            + '</div>';
+            : '';
+            return '<div style="background:#161829;border-radius:10px;border:1px solid ' + (exp ? '#2E3260' : '#1E2140') + ';margin-bottom:8px;overflow:hidden;">'
+            + header + notes + '</div>';
         }).join('');
 
         const anyExp = Object.keys(_mExp).some(function(k) {
