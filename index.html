@@ -1382,9 +1382,12 @@
     const cg = () => G.find(g => g.id === gid);
     const gr = () => {
         const g = cg();
-        return g ? g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean) : [];
+        return g && g.routineIds ? g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean) : [];
     };
-    const inG = id => !!cg()?.routineIds.includes(id);
+    const inG = id => {
+        const g = cg();
+        return !!(g && g.routineIds && g.routineIds.includes(id));
+    };
 
     // Firebase
     async function fbGet(path) {
@@ -1423,7 +1426,10 @@
                     [r.id]: r
                 }), {}));
             }
-            G = data && data.gigs ? Object.values(data.gigs) : [];
+            G = data && data.gigs ? Object.values(data.gigs).map(g => ({
+                ...g,
+                routineIds: g.routineIds || []
+            })) : [];
             showSync('✓ Loaded');
         } catch (e) {
             R = [...MY];
@@ -1466,7 +1472,10 @@
             if (!data)
                 return;
             const newR = data.routines ? Object.values(data.routines) : null;
-            const newG = data.gigs ? Object.values(data.gigs) : null;
+            const newG = data.gigs ? Object.values(data.gigs).map(g => ({
+                ...g,
+                routineIds: g.routineIds || []
+            })) : null;
             const ch = JSON.stringify({
                 r: newR,
                 g: newG
@@ -1599,7 +1608,7 @@
             ;
         const sorted = [...G].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
         return `<div style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;">
-    ${sorted.map(g => {const grs = g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean);const src = g.createdFrom?G.find(x => x.id === g.createdFrom)?.name : '';return `<div style="background:#161829;border-radius:12px;border:1px solid #1E2140;padding:20px;">
+    ${sorted.map(g => {const grs = (g.routineIds || []).map(id => R.find(r => r.id === id)).filter(Boolean);const src = g.createdFrom?G.find(x => x.id === g.createdFrom)?.name : '';return `<div style="background:#161829;border-radius:12px;border:1px solid #1E2140;padding:20px;">
       <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;margin-bottom:5px;">${esc(g.name)}</div>
       ${g.client ? `<div style="font-size:12px;color:#555E7A;margin-bottom:3px;">👤 ${esc(g.client)}</div>` : ''}
       ${g.date ? `<div style="font-size:12px;color:#888CAA;margin-bottom:3px;">📅 ${esc(g.date)}</div>` : ''}
@@ -2132,11 +2141,14 @@
         case 'add-to-gig':
             {
                 const g = cg();
-                if (!g || g.routineIds.includes(id))
+                if (!g)
+                    break;
+                const _rids = g.routineIds || [];
+                if (_rids.includes(id))
                     break;
                 G = G.map(g => g.id === gid ? {
                     ...g,
-                    routineIds: [...g.routineIds, id]
+                    routineIds: [..._rids, id]
                 } : g);
                 await save();
                 rModal();
@@ -2145,7 +2157,7 @@
         case 'rem-from-gig':
             G = G.map(g => g.id === gid ? {
                 ...g,
-                routineIds: g.routineIds.filter(x => x !== id)
+                routineIds: (g.routineIds || []).filter(x => x !== id)
             } : g);
             await save();
             if (modal === 'picker')
@@ -2158,7 +2170,7 @@
                 const g = cg();
                 if (!g)
                     break;
-                const ids = [...g.routineIds],
+                const ids = [...(g.routineIds || [])],
                     i = ids.indexOf(id);
                 if (i <= 0)
                     break;
@@ -2176,7 +2188,7 @@
                 const g = cg();
                 if (!g)
                     break;
-                const ids = [...g.routineIds],
+                const ids = [...(g.routineIds || [])],
                     i = ids.indexOf(id);
                 if (i >= ids.length - 1)
                     break;
