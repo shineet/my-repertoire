@@ -1539,6 +1539,38 @@
     // Master list view
     var _mExp = {}; // expanded state for master list
 
+    // Auto-save with debounce
+    var _asTimers = {};
+    function autoSaveRoutine(el) {
+        var id = el.dataset.rid,
+            field = el.dataset.field,
+            value = el.value;
+        var r = R.find(function(x) {
+            return x.id === id;
+        });
+        if (!r)
+            return;
+        if (field === 'duration')
+            r.duration = parseInt(value, 10) || 0;
+        else
+            r[field] = value;
+        var ind = document.getElementById('as-' + id);
+        if (ind)
+            ind.textContent = 'Saving…';
+        clearTimeout(_asTimers[id]);
+        _asTimers[id] = setTimeout(async function() {
+            await save();
+            var ind2 = document.getElementById('as-' + id);
+            if (ind2) {
+                ind2.textContent = '✓ Saved';
+                setTimeout(function() {
+                    if (ind2)
+                        ind2.textContent = '';
+                }, 2000);
+            }
+        }, 800);
+    }
+
     function editRoutine(id) {
         var r = R.find(function(x) {
             return x.id === id;
@@ -1620,11 +1652,29 @@
             + '</div>'
             + '</div>';
             var notes = exp
-            ? '<div style="border-top:1px solid #1E2140;padding:14px 16px 16px 52px;background:#0F1120;">'
-            + (r.notes
-            ? '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Notes &amp; Method</div>'
-            + '<div style="font-size:13px;color:#888CAA;line-height:1.75;white-space:pre-wrap;font-family:inherit;">' + esc(r.notes) + '</div>'
-            : '<div style="font-size:13px;color:#555E7A;font-style:italic;">No notes for this routine.</div>')
+            ? '<div style="border-top:1px solid #1E2140;padding:14px 16px 16px 14px;background:#0F1120;">'
+            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
+            + '<div>'
+            + '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Duration (mins)</div>'
+            + '<input type="number" value="' + r.duration + '" data-rid="' + r.id + '" data-field="duration" oninput="autoSaveRoutine(this)" '
+            + 'style="background:#161829;border:1px solid #2E3260;border-radius:6px;padding:6px 10px;color:#F0EDE6;font-size:13px;width:80px;font-family:inherit;outline:none;">'
+            + '</div>'
+            + '<div>'
+            + '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Difficulty</div>'
+            + '<select data-rid="' + r.id + '" data-field="difficulty" oninput="autoSaveRoutine(this)" '
+            + 'style="background:#161829;border:1px solid #2E3260;border-radius:6px;padding:6px 10px;color:#F0EDE6;font-size:13px;font-family:inherit;outline:none;">'
+            + ['Beginner', 'Intermediate', 'Advanced'].map(function(d) {
+                return '<option' + (r.difficulty === d ? ' selected' : '') + '>' + d + '</option>';
+            }).join('')
+            + '</select>'
+            + '</div>'
+            + '</div>'
+            + '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Notes &amp; Method</div>'
+            + '<textarea data-rid="' + r.id + '" data-field="notes" oninput="autoSaveRoutine(this)" rows="6" '
+            + 'style="width:100%;background:#161829;border:1px solid #2E3260;border-radius:6px;padding:10px;color:#F0EDE6;font-size:13px;line-height:1.75;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;">'
+            + esc(r.notes || '')
+            + '</textarea>'
+            + '<div id="as-' + r.id + '" style="font-size:11px;color:#4E9C81;margin-top:4px;min-height:16px;"></div>'
             + '</div>'
             : '';
             return '<div style="background:#161829;border-radius:10px;border:1px solid ' + (exp ? '#2E3260' : '#1E2140') + ';margin-bottom:8px;overflow:hidden;">'
