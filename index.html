@@ -1508,7 +1508,7 @@
 
     // Header
     function rHeader() {
-        const nav = (v, l, mv) => `<button data-a="nav-${v}" style="background:${view === mv || view === v ? '#161829' : 'transparent'};color:${view === mv || view === v ? '#C9A047' : '#555E7A'};border:1px solid ${view === mv || view === v ? '#1E2140' : 'transparent'};border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;">${l}</button>`;
+        const nav = (v, l, mv) => `<button onclick="modal=null;document.getElementById('ov').style.display='none';view='${v}';render();" style="background:${view === mv || view === v ? '#161829' : 'transparent'};color:${view === mv || view === v ? '#C9A047' : '#555E7A'};border:1px solid ${view === mv || view === v ? '#1E2140' : 'transparent'};border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;">${l}</button>`;
         let btns = '';
         if (view === 'master')
             btns = `<span style="font-size:12px;color:#555E7A;align-self:center;">${R.length} routines</span> ` + btn('+ Routine', 'data-a="open-add-r"', 'go');
