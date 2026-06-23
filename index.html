@@ -1626,9 +1626,9 @@
             var header = ''
             + '<div style="display:flex;align-items:center;padding:12px 14px;gap:8px;">'
             + '<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;margin-right:4px;">'
-            + (ridx > 0 ? '<button onclick="event.stopPropagation();mvMaster(\'' + r.id + '\',-1)" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▲</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▲</span>')
+            + (ridx > 0 ? '<button data-mv="up" data-rid="' + r.id + '" onclick="event.stopPropagation();mvMaster(this.dataset.rid,-1)" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▲</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▲</span>')
             + '<span style="font-size:11px;color:#555E7A;font-weight:700;">' + (ridx + 1) + '</span>'
-            + (ridx < fil.length - 1 ? '<button onclick="event.stopPropagation();mvMaster(\'' + r.id + '\',1)" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▼</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▼</span>')
+            + (ridx < fil.length - 1 ? '<button data-mv="dn" data-rid="' + r.id + '" onclick="event.stopPropagation();mvMaster(this.dataset.rid,1)" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▼</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▼</span>')
             + '</div>'
             + '<div data-a="toggle-mexp" data-id="' + r.id + '" style="flex:1;min-width:0;cursor:pointer;display:flex;align-items:center;gap:8px;">'
             + '<span style="font-size:12px;color:#555E7A;flex-shrink:0;display:inline-block;transform:' + (exp ? 'rotate(90deg)' : 'rotate(0deg)') + ';transition:transform .15s;">▶</span>'
@@ -1648,7 +1648,7 @@
             + '<span style="font-size:12px;color:#888CAA;">⏱ ' + fmt(r.duration) + '</span>'
             + '<span style="font-size:11px;color:#555E7A;">' + esc(r.difficulty) + '</span>'
             + bdg(r.status, SC[r.status] || '#888CAA', true)
-            + '<button onclick="event.stopPropagation();editRoutine(\'' + r.id + '\')" style="background:#1E2140;border:none;color:#C9A047;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;">Edit</button>'
+            + '<button data-rid="' + r.id + '" onclick="event.stopPropagation();editRoutine(this.dataset.rid)" style="background:#1E2140;border:none;color:#C9A047;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;">Edit</button>'
             + '</div>'
             + '</div>';
             var notes = exp
