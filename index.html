@@ -1561,9 +1561,9 @@
         const fil = R.filter(r => {
             if (stF !== 'All' && r.status !== stF)
                 return false;
-            if (cxF.length && !cxF.some(c => r.contexts.includes(c)))
+            if (cxF.length && !cxF.some(c => (r.contexts || []).includes(c)))
                 return false;
-            if (roF.length && !roF.some(c => r.roles.includes(c)))
+            if (roF.length && !roF.some(c => (r.roles || []).includes(c)))
                 return false;
             if (q && !r.name.toLowerCase().includes(q.toLowerCase()))
                 return false;
@@ -1571,8 +1571,8 @@
         });
         const dRows = fil.map((r, i) => `<div data-a="open-detail" data-id="${r.id}" class="desk-row" style="${GCOL}padding:10px 16px;align-items:center;border-bottom:${i < fil.length - 1 ? '1px solid #1E2140' : 'none'};" data-hov="1">
     <div style="font-weight:500;">${esc(r.name)}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:3px;">${r.contexts.map(c => bdg(c, CC[c], true)).join('')}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:3px;">${r.roles.map(rl => bdg(rl, RC[rl], true)).join('')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
     <div style="font-size:13px;color:#888CAA;">${fmt(r.duration)}</div>
     <div style="font-size:12px;color:#555E7A;">${esc(r.difficulty)}</div>
     <div>${bdg(r.status, SC[r.status] || '#888CAA', true)}</div>
@@ -1580,7 +1580,7 @@
         ).join('');
         const mCards = fil.map(r => `<div data-a="open-detail" data-id="${r.id}" class="mob-card" style="background:#161829;border-radius:10px;border:1px solid #1E2140;padding:14px;margin-bottom:10px;cursor:pointer;">
     <div style="font-weight:600;font-size:15px;margin-bottom:8px;">${esc(r.name)}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${r.contexts.map(c => bdg(c, CC[c], true)).join('')}${r.roles.map(rl => bdg(rl, RC[rl], true)).join('')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${(r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
     <div style="display:flex;gap:12px;align-items:center;">${bdg(r.status, SC[r.status] || '#888CAA', true)}<span style="font-size:12px;color:#888CAA;">⏱ ${fmt(r.duration)}</span><span style="font-size:11px;color:#555E7A;">${esc(r.difficulty)}</span></div>
   </div>`
         ).join('');
@@ -1656,8 +1656,8 @@
     </div>
     <div data-a="open-detail" data-id="${
         r.id}" style="cursor:pointer;font-weight:500;">${esc(r.name)}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:3px;">${r.contexts.map(c => bdg(c, CC[c], true)).join('')}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:3px;">${r.roles.map(rl => bdg(rl, RC[rl], true)).join('')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
     <div style="font-size:13px;color:#888CAA;">${fmt(r.duration)}</div>
     ${btn('Remove', `data-a="rem-from-gig" data-id="${r.id}"`, `re`, true)}
   </div>`
@@ -1669,7 +1669,7 @@
       <div style="flex:1;">
         <div data-a="open-detail" data-id="${
         r.id}" style="font-weight:500;cursor:pointer;margin-bottom:4px;">${esc(r.name)}</div>
-        <div style="display:flex;gap:3px;flex-wrap:wrap;">${r.contexts.map(c => bdg(c, CC[c], true)).join('')}${r.roles.map(rl => bdg(rl, RC[rl], true)).join('')}</div>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;">${(r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
       </div>
       <span style="font-size:12px;color:#888CAA;">${
         fmt(r.duration)}</span>
@@ -1779,14 +1779,14 @@
           <div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Context</div>
           <div style="display:flex;flex-wrap:wrap;gap:5px;">${
 
-            r.contexts.length ? r.contexts.map(c => bdg(c, CC[c])).join('') : `<span style="color:#555E7A;">—</span>`}</div>
+            r.contexts.length ? (r.contexts || []).map(c => bdg(c, CC[c])).join('') : `<span style="color:#555E7A;">—</span>`}</div>
         </div>
         <div>
           <div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Role in Show</div>
           <div style="display:flex;flex-wrap:wrap;gap:5px;">${
 
 
-            r.roles.length ? r.roles.map(rl => bdg(rl, RC[rl])).join('') : `<span style="color:#555E7A;">—</span>`}</div>
+            r.roles.length ? (r.roles || []).map(rl => bdg(rl, RC[rl])).join('') : `<span style="color:#555E7A;">—</span>`}</div>
         </div>
       </div>
       ${
@@ -1841,7 +1841,7 @@
         else if (modal === 'picker') {
             const g = cg();
             const pl = R.filter(r => {
-                if (pCx.length && !pCx.some(c => r.contexts.includes(c)))
+                if (pCx.length && !pCx.some(c => (r.contexts || []).includes(c)))
                     return false;
                 if (pQ && !r.name.toLowerCase().includes(pQ.toLowerCase()))
                     return false;
@@ -1853,7 +1853,7 @@
       <div style="flex:1;">
         <div style="font-weight:500;font-size:13px;">${
             esc(r.name)}</div>
-        <div style="display:flex;gap:3px;margin-top:3px;flex-wrap:wrap;">${r.contexts.map(c => bdg(c, CC[c], true)).join('')}${r.roles.map(rl => bdg(rl, RC[rl], true)).join('')}<span style="font-size:11px;color:#555E7A;align-self:center;margin-left:2px;">⏱${fmt(r.duration)}</span></div>
+        <div style="display:flex;gap:3px;margin-top:3px;flex-wrap:wrap;">${(r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}<span style="font-size:11px;color:#555E7A;align-self:center;margin-left:2px;">⏱${fmt(r.duration)}</span></div>
       </div>
       <button data-a="${
             inG(r.id) ? 'rem-from-gig' : 'add-to-gig'}" data-id="${r.id}" style="background:${inG(r.id) ? '#C9507A22' : ' #C9A04722'};color:${inG(r.id) ? '#C9507A' : '#C9A047'};border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">${inG(r.id) ? '✓ In Set' : '+ Add'}</button>
@@ -1971,8 +1971,8 @@
                         duration: r.duration,
                         difficulty: r.difficulty,
                         status: r.status,
-                        roles: [...r.roles],
-                        contexts: [...r.contexts],
+                        roles: [...(r.roles || [])],
+                        contexts: [...(r.contexts || [])],
                         notes: r.notes
                     };
                     rEid = id;
