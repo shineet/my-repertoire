@@ -1620,25 +1620,39 @@
         if (!G.length)
             return `<div style="text-align:center;padding:80px 20px;color:#555E7A;">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:10px;color:#C9A047;">No gigs yet</div>
-    <div style="font-size:14px;margin-bottom:24px;">Create your first show setlist.</div>
+    <div style="font-size:14px;margin-bottom:24px;">Create a show set or a reusable template.</div>
     ${
 
             btn('+ New Gig', 'data-a="open-add-g"', 'go')}
   </div>`
             ;
-        const sorted = [...G].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-        return `<div style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;">
-    ${sorted.map(g => {const grs = g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean);const src = g.createdFrom?G.find(x => x.id === g.createdFrom)?.name : '';return `<div style="background:#161829;border-radius:12px;border:1px solid #1E2140;padding:20px;">
-      <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;margin-bottom:5px;">${esc(g.name)}</div>
-      ${g.client ? `<div style="font-size:12px;color:#555E7A;margin-bottom:3px;">👤 ${esc(g.client)}</div>` : ''}
+        const templates = G.filter(g => g.type === 'template');
+        const shows = G.filter(g => g.type !== 'template').sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        const card = g => {
+            const grs = g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean);
+            const src = g.createdFrom?G.find(x => x.id === g.createdFrom)?.name : '';
+            return `<div style="background:#161829;border-radius:12px;border:1px solid #1E2140;padding:20px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;">
+        <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;">${
+            esc(g.name)}</div>
+        ${g.type === 'template' ? `<span style="font-size:10px;background:#7A6EC922;color:#7A6EC9;border:1px solid #7A6EC944;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;">Template</span>` : ''}
+      </div>
+      ${
+            g.client ? `<div style="font-size:12px;color:#555E7A;margin-bottom:3px;">👤 ${esc(g.client)}</div>` : ''}
       ${g.date ? `<div style="font-size:12px;color:#888CAA;margin-bottom:3px;">📅 ${esc(g.date)}</div>` : ''}
       <div style="display:flex;gap:14px;margin:8px 0;">${['' + grs.length + ' routines', '⏱ ' + fmt(tot(grs))].map(t => `<span style="font-size:12px;color:#888CAA;">${t}</span>`).join('')}</div>
-      ${src ? `<div style="font-size:11px;color:#555E7A;margin-bottom:10px;font-style:italic;">Duplicated from "${esc(src)}"</div>` : ''}
+      ${src ? `<div style="font-size:11px;color:#555E7A;margin-bottom:8px;font-style:italic;">From "${esc(src)}"</div>` : ''}
       ${g.notes ? `<div style="font-size:12px;color:#555E7A;margin-bottom:10px;">${esc(g.notes)}</div>` : ''}
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">${btn('Open Setlist', `data-a="open-gig" data-id="${g.id}"`, `gh`, true)}${btn('Duplicate', `data-a="dup-gig2" data-id="${g.id}"`, `ot`, true)}${btn('✕', `data-a="del-g" data-id="${g.id}"`, `re`, true)}</div>
-    </div>`;}).join('')}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">${btn('Open', `data-a="open-gig" data-id="${g.id}"`, `gh`, true)}${btn(g.type === 'template' ? 'Use as Show' : 'Duplicate', `data-a="dup-gig2" data-id="${g.id}"`, `ot`, true)}${btn('✕', `data-a="del-g" data-id="${g.id}"`, `re`, true)}</div>
+    </div>`
+            ;
+        };
+        const section = (title, icon, items, empty) => items.length ? `<div style="margin-bottom:28px;">
+    <div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:12px;">${icon} ${title} <span style="color:#2E3260;">(${items.length})</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">${items.map(card).join('')}</div>
   </div>`
-        ;
+        : (!shows.length && !templates.length ? '' : items === shows && templates.length ? `<div style="margin-bottom:28px;"><div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:12px;">${icon} ${title}</div><div style="color:#555E7A;font-size:13px;padding:20px 0;">${empty}</div></div>` : '');
+        return `<div style="padding:16px 20px;">${section('Show Sets', '🎭', shows, 'No show sets yet. Duplicate a template or create a new one.')}${section('Templates', '📋', templates, 'No templates yet — create one to reuse across shows.')}</div>`;
     }
 
     // Gig detail view
@@ -1825,7 +1839,8 @@
             ov.innerHTML = `<div style="${bx()}" class="modal-box" id="mb">${mt(gEid ? 'Edit Gig' : 'New Gig')}
       <div style="display:flex;flex-direction:column;gap:14px;">
         <div>${
-            lb('Gig Name')}${inp('gf-name', gF.name, "e.g. Jennifer's Birthday Party")}</div>
+            lb('Type')}<div style="display:flex;gap:8px;margin-top:4px;">${['show', 'template'].map(t => `<button data-a="set-gig-type" data-v="${t}" style="flex:1;padding:10px;border-radius:8px;border:2px solid ${(gF.type || 'show') === t ? '#C9A047' : '#1E2140'};background:${(gF.type || 'show') === t ? '#C9A04722' : 'transparent'};color:${(gF.type || 'show') === t ? '#C9A047' : '#555E7A'};cursor:pointer;font-family:inherit;font-size:13px;font-weight:${(gF.type || 'show') === t ? 700 : 400};">${t === 'show' ? '🎭 Show Set' : '📋 Template'}</button>`).join('')}</div><input id="gf-type" type="hidden" value="${gF.type || 'show'}"></div>
+        <div>${lb('Gig Name')}${inp('gf-name', gF.name, gF.type === 'template' ? "e.g. Corporate 45-min Set" : "e.g. Jennifer's Birthday Party")}</div>
         <div>${lb('Date (optional)')}${inp('gf-date', gF.date || '', '', 'date')}</div>
         <div>${lb('Client / Event')}${inp('gf-client', gF.client || '', 'e.g. Jennifer M.')}</div>
         <div>${lb('Notes')}${ta('gf-notes', gF.notes || '', 'Venue, set length, special requests…', 3)}</div>
@@ -2054,7 +2069,8 @@
                     name: '',
                     date: '',
                     client: '',
-                    notes: ''
+                    notes: '',
+                    type: 'show'
                 };
                 gEid = null;
                 modal = 'g';
@@ -2069,7 +2085,8 @@
                         name: g.name,
                         date: g.date || '',
                         client: g.client || '',
-                        notes: g.notes || ''
+                        notes: g.notes || '',
+                        type: g.type || 'show'
                     };
                     gEid = g.id;
                     modal = 'g';
@@ -2085,7 +2102,8 @@
                         name: n,
                         date: document.getElementById('gf-date')?.value || '',
                         client: document.getElementById('gf-client')?.value || '',
-                        notes: document.getElementById('gf-notes')?.value || ''
+                        notes: document.getElementById('gf-notes')?.value || '',
+                        type: document.getElementById('gf-type')?.value || 'show'
                     };
                     if (gEid)
                         G = G.map(g => g.id === gEid ? {
@@ -2159,7 +2177,8 @@
                         id: uid(),
                         name: n,
                         date: '',
-                        createdFrom: src.id
+                        createdFrom: src.id,
+                        type: 'show'
                     };
                     G = [...G, ng];
                     gid = ng.id;
@@ -2167,6 +2186,15 @@
                     modal = null;
                     await save();
                     render();
+                    break;
+                }
+            case 'set-gig-type':
+                {
+                    gF.type = v;
+                    const h = document.getElementById('gf-type');
+                    if (h)
+                        h.value = v;
+                    rModal();
                     break;
                 }
             case 'open-picker':
