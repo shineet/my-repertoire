@@ -1405,7 +1405,18 @@
             showSync('Loading…', '#2E3260');
             const data = await fbGet('/');
             if (data && data.routines) {
-                R = Object.values(data.routines);
+                const vals = Object.values(data.routines);
+                // Validate each routine has required fields before using
+                R = vals.filter(r => r && r.id && r.name).map(r => ({
+                    id: r.id,
+                    name: r.name || '',
+                    duration: r.duration || 0,
+                    difficulty: r.difficulty || 'Intermediate',
+                    status: r.status || 'Active',
+                    roles: Array.isArray(r.roles) ? r.roles : [],
+                    contexts: Array.isArray(r.contexts) ? r.contexts : [],
+                    notes: r.notes || ''
+                }));
             } else {
                 R = [...MY];
                 await fbPut('/routines', MY.reduce((a, r) => ({
@@ -1413,15 +1424,46 @@
                     [r.id]: r
                 }), {}));
             }
-            G = data && data.gigs ? Object.values(data.gigs) : [];
+            G = data && data.gigs ? Object.values(data.gigs).filter(g => g && g.id && g.name).map(g => ({
+                id: g.id,
+                name: g.name || '',
+                date: g.date || '',
+                client: g.client || '',
+                notes: g.notes || '',
+                routineIds: Array.isArray(g.routineIds) ? g.routineIds : [],
+                createdFrom: g.createdFrom || null
+            })) : [];
             showSync('✓ Loaded');
         } catch (e) {
+            console.error('Load error:', e);
             R = [...MY];
             G = [];
             showSync('Offline — using local data', '#C9507A');
         }
-        render();
+        try {
+            render();
+        } catch (e) {
+            console.error('Render error:', e);
+            document.getElementById('sc').innerHTML = `<div style="padding:40px;text-align:center;color:#C9507A;">
+      <div style="font-size:18px;margin-bottom:12px;">Something went wrong loading your data.</div>
+      <div style="font-size:13px;color:#555E7A;margin-bottom:24px;">Error: ${
+            e.message}</div>
+      <button onclick="resetToDefaults()" style="background:#C9507A22;color:#C9507A;border:1px solid #C9507A44;border-radius:8px;padding:10px 20px;cursor:pointer;font-family:inherit;font-size:14px;margin-right:10px;">Reset to Built-in Routines</button>
+      <button onclick="location.reload()" style="background:#1E2140;color:#888CAA;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-family:inherit;font-size:14px;">Reload Page</button>
+    </div>`
+
+
+            ;
+        }
         setInterval(sync, 20000);
+    }
+
+    async function resetToDefaults() {
+        if (!confirm('This will reset your routines to the built-in 118. Your gigs will be kept. Continue?'))
+            return;
+        R = [...MY];
+        await save();
+        render();
     }
 
     async function save() {
