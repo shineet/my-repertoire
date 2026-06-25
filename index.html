@@ -1405,9 +1405,7 @@
             showSync('Loading…', '#2E3260');
             const data = await fbGet('/');
             if (data && data.routines) {
-                const vals = Object.values(data.routines);
-                // Validate each routine has required fields before using
-                R = vals.filter(r => r && r.id && r.name).map(r => ({
+                R = Object.values(data.routines).filter(r => r && r.id && r.name).map(r => ({
                     id: r.id,
                     name: r.name || '',
                     duration: r.duration || 0,
@@ -1431,11 +1429,11 @@
                 client: g.client || '',
                 notes: g.notes || '',
                 routineIds: Array.isArray(g.routineIds) ? g.routineIds : [],
-                createdFrom: g.createdFrom || null
+                createdFrom: g.createdFrom || null,
+                type: g.type || null
             })) : [];
             showSync('✓ Loaded');
         } catch (e) {
-            console.error('Load error:', e);
             R = [...MY];
             G = [];
             showSync('Offline — using local data', '#C9507A');
@@ -1443,27 +1441,16 @@
         try {
             render();
         } catch (e) {
-            console.error('Render error:', e);
             document.getElementById('sc').innerHTML = `<div style="padding:40px;text-align:center;color:#C9507A;">
-      <div style="font-size:18px;margin-bottom:12px;">Something went wrong loading your data.</div>
-      <div style="font-size:13px;color:#555E7A;margin-bottom:24px;">Error: ${
+      <div style="font-size:18px;margin-bottom:12px;">Something went wrong.</div>
+      <div style="font-size:13px;color:#555E7A;margin-bottom:24px;">${
             e.message}</div>
-      <button onclick="resetToDefaults()" style="background:#C9507A22;color:#C9507A;border:1px solid #C9507A44;border-radius:8px;padding:10px 20px;cursor:pointer;font-family:inherit;font-size:14px;margin-right:10px;">Reset to Built-in Routines</button>
-      <button onclick="location.reload()" style="background:#1E2140;color:#888CAA;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-family:inherit;font-size:14px;">Reload Page</button>
+      <button onclick="location.reload()" style="background:#1E2140;color:#888CAA;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-family:inherit;font-size:14px;">Reload</button>
     </div>`
-
 
             ;
         }
         setInterval(sync, 20000);
-    }
-
-    async function resetToDefaults() {
-        if (!confirm('This will reset your routines to the built-in 118. Your gigs will be kept. Continue?'))
-            return;
-        R = [...MY];
-        await save();
-        render();
     }
 
     async function save() {
@@ -1626,37 +1613,42 @@
             btn('+ New Gig', 'data-a="open-add-g"', 'go')}
   </div>`
             ;
-        const isTemplate = g => g.type === 'template' || (g.client || '').toLowerCase() === 'template';
-        const templates = G.filter(isTemplate);
-        const shows = G.filter(g => !isTemplate(g)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        const isT = g => g.type === 'template' || (g.client || '').toLowerCase() === 'template';
+        const shows = [...G].filter(g => !isT(g)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        const templates = G.filter(isT);
         const card = g => {
             const grs = g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean);
-            const src = g.createdFrom?G.find(x => x.id === g.createdFrom)?.name : '';
-            return `<div style="background:#161829;border-radius:12px;border:1px solid #1E2140;padding:20px;">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;">
-        <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;">${
+            const sn = g.createdFrom?G.find(x => x.id === g.createdFrom)?.name : '';
+            return `<div style="background:#161829;border-radius:12px;border:1px solid #1E2140;padding:18px;" data-hov="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;">${
             esc(g.name)}</div>
-        ${g.type === 'template' ? `<span style="font-size:10px;background:#7A6EC922;color:#7A6EC9;border:1px solid #7A6EC944;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;">Template</span>` : ''}
+        ${isT(g) ? `<span style="font-size:10px;background:#7A6EC922;color:#7A6EC9;border:1px solid #7A6EC944;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;margin-left:8px;">Template</span>` : ''}
       </div>
       ${
-            g.client ? `<div style="font-size:12px;color:#555E7A;margin-bottom:3px;">👤 ${esc(g.client)}</div>` : ''}
-      ${g.date ? `<div style="font-size:12px;color:#888CAA;margin-bottom:3px;">📅 ${esc(g.date)}</div>` : ''}
-      <div style="display:flex;gap:14px;margin:8px 0;">${['' + grs.length + ' routines', '⏱ ' + fmt(tot(grs))].map(t => `<span style="font-size:12px;color:#888CAA;">${t}</span>`).join('')}</div>
-      ${src ? `<div style="font-size:11px;color:#555E7A;margin-bottom:8px;font-style:italic;">From "${esc(src)}"</div>` : ''}
-      ${g.notes ? `<div style="font-size:12px;color:#555E7A;margin-bottom:10px;">${esc(g.notes)}</div>` : ''}
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">${btn('Open', `data-a="open-gig" data-id="${g.id}"`, `gh`, true)}${btn(g.type === 'template' ? 'Use as Show' : 'Duplicate', `data-a="dup-gig2" data-id="${g.id}"`, `ot`, true)}${btn('✕', `data-a="del-g" data-id="${g.id}"`, `re`, true)}</div>
+            g.client && !isT(g) ? `<div style="font-size:11px;color:#555E7A;margin-bottom:3px;">👤 ${esc(g.client)}</div>` : ''}
+      ${g.date ? `<div style="font-size:11px;color:#888CAA;margin-bottom:3px;">📅 ${esc(g.date)}</div>` : ''}
+      <div style="display:flex;gap:12px;margin:6px 0 ${sn ? 5 : 10}px;"><span style="font-size:11px;color:#888CAA;">${grs.length} routines</span><span style="font-size:11px;color:#888CAA;">⏱ ${fmt(tot(grs))}</span></div>
+      ${sn ? `<div style="font-size:10px;color:#555E7A;margin-bottom:10px;font-style:italic;">From "${esc(sn)}"</div>` : ''}
+      ${g.notes && !isT(g) ? `<div style="font-size:11px;color:#555E7A;margin-bottom:10px;">${esc(g.notes)}</div>` : ''}
+      <div style="display:flex;gap:5px;">
+        ${
+            btn('Open', `data-a="open-gig" data-id="${g.id}"`, `gh`, true)}
+        ${btn(isT(g) ? 'Use as Show' : 'Duplicate', `data-a="dup-gig2" data-id="${g.id}"`, `go`, true)}
+        ${btn('✕', `data-a="del-g" data-id="${g.id}"`, `re`, true)}
+      </div>
     </div>`
+
             ;
         };
-        const section = (title, icon, items, empty) => items.length ? `<div style="margin-bottom:28px;">
-    <div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:12px;">${icon} ${title} <span style="color:#2E3260;">(${items.length})</span></div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">${items.map(card).join('')}</div>
+        const sec = (title, icon, items, empty) => `<div style="margin-bottom:24px;">
+    <div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:10px;">${icon} ${title}${items.length ? ` <span style="color:#2E3260;">(${items.length})</span>` : ''}</div>
+    ${items.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;">${items.map(card).join('')}</div>` : `<div style="font-size:13px;color:#555E7A;padding:16px 0;">${empty}</div>`}
   </div>`
-        : (!shows.length && !templates.length ? '' : items === shows && templates.length ? `<div style="margin-bottom:28px;"><div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:12px;">${icon} ${title}</div><div style="color:#555E7A;font-size:13px;padding:20px 0;">${empty}</div></div>` : '');
-        return `<div style="padding:16px 20px;">${section('Show Sets', '🎭', shows, 'No show sets yet. Duplicate a template or create a new one.')}${section('Templates', '📋', templates, 'No templates yet — create one to reuse across shows.')}</div>`;
+        ;
+        return `<div style="padding:16px 20px;">${sec('Show Sets', '🎭', shows, 'No show sets yet — duplicate a template or create a new one.')}${sec('Templates', '📋', templates, 'No templates yet — create one to reuse across shows.')}</div>`;
     }
 
-    // Gig detail view
     function rGigDetail() {
         const g = cg();
         if (!g)
@@ -1712,7 +1704,7 @@
           <span style="font-size:13px;color:#C9A047;font-weight:700;">Total: ${fmt(tot(grs))}</span>
         </div>
       </div>
-      <div class="mob-card">${
+      <div class="mob-card" style="display:block;">${
 
         mRows}<div style="text-align:right;padding:8px 4px;font-size:13px;color:#C9A047;font-weight:700;">Total: ${fmt(tot(grs))} · ${grs.length} routines</div></div>
     </div>`
@@ -1721,7 +1713,7 @@
         ;
     }
 
-    // Snapshot current form input values back into rF (so re-render doesn't lose typed text)
+    // Snapshot current form inputs back into rF so re-render doesn't lose typed text
     function snapRF() {
         const n = document.getElementById('rf-name');
         const d = document.getElementById('rf-dur');
@@ -1739,8 +1731,6 @@
         if (st)
             rF.status = st.value;
     }
-
-    // Re-render modal and restore focus to previously active input
     function rModalFocused() {
         const focusedId = document.activeElement?.id || null;
         const cursorPos = document.activeElement?.selectionStart ?? null;
@@ -1754,7 +1744,6 @@
             }
         }
     }
-
     // Modals
     function rModal() {
         const ov = document.getElementById('ov');
@@ -1811,7 +1800,7 @@
         <div style="background:#0F1120;border-radius:8px;padding:16px;font-size:13px;color:#888CAA;line-height:1.75;white-space:pre-wrap;font-family:inherit;">${
             esc(r.notes)}</div>
       </div>` : ''}
-      ${ma(btn('Delete', `data-a="del-r" data-id="${r.id}"`, 're') + btn('Close', 'data-a="close-modal"') + btn('Edit Routine', `data-a="edit-from-detail" data-id="${r.id}"`, `go`))}
+      ${ma(btn('Delete', `data-a="del-r-modal" data-id="${r.id}"`, 're') + btn('Close', 'data-a="close-modal"') + btn('Edit Routine', `data-a="edit-from-detail" data-id="${r.id}"`, `go`))}
     </div>`
             ;
         }
@@ -1840,8 +1829,7 @@
             ov.innerHTML = `<div style="${bx()}" class="modal-box" id="mb">${mt(gEid ? 'Edit Gig' : 'New Gig')}
       <div style="display:flex;flex-direction:column;gap:14px;">
         <div>${
-            lb('Type')}<div style="display:flex;gap:8px;margin-top:4px;">${['show', 'template'].map(t => `<button data-a="set-gig-type" data-v="${t}" style="flex:1;padding:10px;border-radius:8px;border:2px solid ${(gF.type || 'show') === t ? '#C9A047' : '#1E2140'};background:${(gF.type || 'show') === t ? '#C9A04722' : 'transparent'};color:${(gF.type || 'show') === t ? '#C9A047' : '#555E7A'};cursor:pointer;font-family:inherit;font-size:13px;font-weight:${(gF.type || 'show') === t ? 700 : 400};">${t === 'show' ? '🎭 Show Set' : '📋 Template'}</button>`).join('')}</div><input id="gf-type" type="hidden" value="${gF.type || 'show'}"></div>
-        <div>${lb('Gig Name')}${inp('gf-name', gF.name, gF.type === 'template' ? "e.g. Corporate 45-min Set" : "e.g. Jennifer's Birthday Party")}</div>
+            lb('Gig Name')}${inp('gf-name', gF.name, "e.g. Jennifer's Birthday Party")}</div>
         <div>${lb('Date (optional)')}${inp('gf-date', gF.date || '', '', 'date')}</div>
         <div>${lb('Client / Event')}${inp('gf-client', gF.client || '', 'e.g. Jennifer M.')}</div>
         <div>${lb('Notes')}${ta('gf-notes', gF.notes || '', 'Venue, set length, special requests…', 3)}</div>
@@ -1950,332 +1938,327 @@
         const a = el.dataset.a,
             id = el.dataset.id,
             v = el.dataset.v;
-        try {
-            switch (a) {
-            case 'nav-master':
-                view = 'master';
-                render();
+        switch (a) {
+        case 'nav-master':
+            view = 'master';
+            render();
+            break;
+        case 'nav-gigs':
+            view = 'gigs';
+            render();
+            break;
+        case 'open-detail':
+            detailId = id;
+            modal = 'detail';
+            rModal();
+            break;
+        case 'del-r-modal':
+            if (!confirm('Delete this routine? This cannot be undone.'))
                 break;
-            case 'nav-gigs':
-                view = 'gigs';
-                render();
-                break;
-            case 'open-detail':
-                detailId = id;
-                modal = 'detail';
-                rModal();
-                break;
-            case 'del-r':
-                if (!confirm('Delete this routine? This cannot be undone.'))
+            R = R.filter(r => r.id !== id);
+            G = G.map(g => ({
+                ...g,
+                routineIds: g.routineIds.filter(x => x !== id)
+            }));
+            modal = null;
+            await save();
+            render();
+            break;
+        case 'edit-from-detail':
+            {
+                const r = R.find(r => r.id === id);
+                if (!r)
                     break;
-                R = R.filter(r => r.id !== id);
-                G = G.map(g => ({
-                    ...g,
-                    routineIds: g.routineIds.filter(x => x !== id)
-                }));
-                modal = null;
-                await save();
-                render();
-                break;
-            case 'edit-from-detail':
-                {
-                    const r = R.find(r => r.id === id);
-                    if (!r)
-                        break;
-                    rF = {
-                        name: r.name,
-                        duration: r.duration,
-                        difficulty: r.difficulty,
-                        status: r.status,
-                        roles: [...(r.roles || [])],
-                        contexts: [...(r.contexts || [])],
-                        notes: r.notes
-                    };
-                    rEid = id;
-                    modal = 'r';
-                    rModal();
-                    break;
-                }
-            case 'open-add-r':
                 rF = {
-                    name: '',
-                    duration: 5,
-                    difficulty: 'Intermediate',
-                    status: 'Active',
-                    roles: ['Feature'],
-                    contexts: ['Stage'],
-                    notes: ''
+                    name: r.name,
+                    duration: r.duration,
+                    difficulty: r.difficulty,
+                    status: r.status,
+                    roles: [...(r.roles || [])],
+                    contexts: [...(r.contexts || [])],
+                    notes: r.notes
                 };
-                rEid = null;
+                rEid = id;
                 modal = 'r';
                 rModal();
                 break;
-            case 'rf-cx':
-                {
-                    snapRF();
-                    rF.contexts = rF.contexts.includes(v) ? rF.contexts.filter(x => x !== v) : [...rF.contexts, v];
-                    rModalFocused();
-                    break;
-                }
-            case 'rf-ro':
-                {
-                    snapRF();
-                    rF.roles = rF.roles.includes(v) ? rF.roles.filter(x => x !== v) : [...rF.roles, v];
-                    rModalFocused();
-                    break;
-                }
-            case 'save-r':
-                {
-                    const n=document.getElementById('rf-name')?.value.trim();
-                    if (!n)
-                        break;
-                    const nr = {
-                        name: n,
-                        duration: +(document.getElementById('rf-dur')?.value) || 5,
-                        difficulty:document.getElementById('rf-diff')?.value,
-                        status:document.getElementById('rf-stat')?.value,
-                        roles: [...rF.roles],
-                        contexts: [...rF.contexts],
-                        notes: document.getElementById('rf-notes')?.value || ''
-                    };
-                    if (rEid)
-                        R = R.map(r => r.id === rEid ? {
-                            ...r,
-                            ...nr
-                        } : r);
-                    else
-                        R = [...R, {
-                            id: uid(),
-                            ...nr
-                        }];
-                    modal = null;
-                    await save();
-                    render();
-                    break;
-                }
-            case 'tog-cx':
-                cxF = cxF.includes(v) ? cxF.filter(x => x !== v) : [...cxF, v];
-                render();
+            }
+        case 'open-add-r':
+            rF = {
+                name: '',
+                duration: 5,
+                difficulty: 'Intermediate',
+                status: 'Active',
+                roles: ['Feature'],
+                contexts: ['Stage'],
+                notes: ''
+            };
+            rEid = null;
+            modal = 'r';
+            rModal();
+            break;
+        case 'rf-cx':
+            {
+                snapRF();
+                rF.contexts = rF.contexts.includes(v) ? rF.contexts.filter(x => x !== v) : [...rF.contexts, v];
+                rModalFocused();
                 break;
-            case 'tog-ro':
-                roF = roF.includes(v) ? roF.filter(x => x !== v) : [...roF, v];
-                render();
+            }
+        case 'rf-ro':
+            {
+                snapRF();
+                rF.roles = rF.roles.includes(v) ? rF.roles.filter(x => x !== v) : [...rF.roles, v];
+                rModalFocused();
                 break;
-            case 'tog-st':
-                stF = v;
-                render();
-                break;
-            case 'open-add-g':
-                gF = {
-                    name: '',
-                    date: '',
-                    client: '',
-                    notes: '',
-                    type: 'show'
+            }
+        case 'save-r':
+            {
+                const n=document.getElementById('rf-name')?.value.trim();
+                if (!n)
+                    break;
+                const nr = {
+                    name: n,
+                    duration: +(document.getElementById('rf-dur')?.value) || 5,
+                    difficulty:document.getElementById('rf-diff')?.value,
+                    status:document.getElementById('rf-stat')?.value,
+                    roles: [...rF.roles],
+                    contexts: [...rF.contexts],
+                    notes: document.getElementById('rf-notes')?.value || ''
                 };
-                gEid = null;
-                modal = 'g';
-                render();
-                break;
-            case 'edit-gig':
-                {
-                    const g = cg();
-                    if (!g)
-                        break;
-                    gF = {
-                        name: g.name,
-                        date: g.date || '',
-                        client: g.client || '',
-                        notes: g.notes || '',
-                        type: g.type || 'show'
-                    };
-                    gEid = g.id;
-                    modal = 'g';
-                    render();
-                    break;
-                }
-            case 'save-g':
-                {
-                    const n=document.getElementById('gf-name')?.value.trim();
-                    if (!n)
-                        break;
-                    const ng = {
-                        name: n,
-                        date: document.getElementById('gf-date')?.value || '',
-                        client: document.getElementById('gf-client')?.value || '',
-                        notes: document.getElementById('gf-notes')?.value || '',
-                        type: document.getElementById('gf-type')?.value || 'show'
-                    };
-                    if (gEid)
-                        G = G.map(g => g.id === gEid ? {
-                            ...g,
-                            ...ng
-                        } : g);
-                    else {
-                        const newg = {
-                            id: uid(),
-                            ...ng,
-                            routineIds: [],
-                            createdFrom: null
-                        };
-                        G = [...G, newg];
-                        gid = newg.id;
-                        view = 'gig';
-                    }
-                    modal = null;
-                    await save();
-                    render();
-                    break;
-                }
-            case 'open-gig':
-                gid = id;
-                view = 'gig';
-                render();
-                break;
-            case 'del-g':
-                if (!confirm('Delete this gig? This cannot be undone.'))
-                    break;
-                G = G.filter(g => g.id !== id);
-                if (gid === id) {
-                    view = 'gigs';
-                    gid = null;
-                }
-                await save();
-                render();
-                break;
-            case 'dup-gig':
-                {
-                    const src = cg();
-                    if (!src)
-                        break;
-                    dFr = src.id;
-                    dN = src.name + ' — Copy';
-                    modal = 'dup';
-                    render();
-                    break;
-                }
-            case 'dup-gig2':
-                {
-                    const src = G.find(g => g.id === id);
-                    if (!src)
-                        break;
-                    dFr = id;
-                    dN = src.name + ' — Copy';
-                    modal = 'dup';
-                    render();
-                    break;
-                }
-            case 'save-dup':
-                {
-                    const n=document.getElementById('dup-name')?.value.trim();
-                    if (!n)
-                        break;
-                    const src = G.find(g => g.id === dFr);
-                    if (!src)
-                        break;
-                    const ng = {
-                        ...src,
-                        id: uid(),
-                        name: n,
-                        date: '',
-                        createdFrom: src.id,
-                        type: 'show'
-                    };
-                    G = [...G, ng];
-                    gid = ng.id;
-                    view = 'gig';
-                    modal = null;
-                    await save();
-                    render();
-                    break;
-                }
-            case 'set-gig-type':
-                {
-                    gF.type = v;
-                    const h = document.getElementById('gf-type');
-                    if (h)
-                        h.value = v;
-                    rModal();
-                    break;
-                }
-            case 'open-picker':
-                pCx = [];
-                pQ = '';
-                modal = 'picker';
-                render();
-                break;
-            case 'pk-cx':
-                pCx = pCx.includes(v) ? pCx.filter(x => x !== v) : [...pCx, v];
-                rModal();
-                break;
-            case 'add-to-gig':
-                {
-                    const g = cg();
-                    if (!g || g.routineIds.includes(id))
-                        break;
-                    G = G.map(g => g.id === gid ? {
-                        ...g,
-                        routineIds: [...g.routineIds, id]
-                    } : g);
-                    await save();
-                    rModal();
-                    break;
-                }
-            case 'rem-from-gig':
-                G = G.map(g => g.id === gid ? {
-                    ...g,
-                    routineIds: g.routineIds.filter(x => x !== id)
-                } : g);
-                await save();
-                if (modal === 'picker')
-                    rModal();
+                if (rEid)
+                    R = R.map(r => r.id === rEid ? {
+                        ...r,
+                        ...nr
+                    } : r);
                 else
-                    render();
-                break;
-            case 'mv-up':
-                {
-                    const g = cg();
-                    if (!g)
-                        break;
-                    const ids = [...g.routineIds],
-                        i = ids.indexOf(id);
-                    if (i <= 0)
-                        break;
-                    [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]];
-                    G = G.map(g => g.id === gid ? {
-                        ...g,
-                        routineIds: ids
-                    } : g);
-                    await save();
-                    render();
-                    break;
-                }
-            case 'mv-dn':
-                {
-                    const g = cg();
-                    if (!g)
-                        break;
-                    const ids = [...g.routineIds],
-                        i = ids.indexOf(id);
-                    if (i >= ids.length - 1)
-                        break;
-                    [ids[i], ids[i + 1]] = [ids[i + 1], ids[i]];
-                    G = G.map(g => g.id === gid ? {
-                        ...g,
-                        routineIds: ids
-                    } : g);
-                    await save();
-                    render();
-                    break;
-                }
-            case 'close-modal':
+                    R = [...R, {
+                        id: uid(),
+                        ...nr
+                    }];
                 modal = null;
+                await save();
                 render();
                 break;
             }
-        } catch (err) {
-            console.error('Action error [' + a + ']', err);
-            showSync('Error: ' + err.message, '#C9507A');
+        case 'tog-cx':
+            cxF = cxF.includes(v) ? cxF.filter(x => x !== v) : [...cxF, v];
+            render();
+            break;
+        case 'tog-ro':
+            roF = roF.includes(v) ? roF.filter(x => x !== v) : [...roF, v];
+            render();
+            break;
+        case 'tog-st':
+            stF = v;
+            render();
+            break;
+        case 'open-add-g':
+            gF = {
+                name: '',
+                date: '',
+                client: '',
+                notes: '',
+                type: 'show'
+            };
+            gEid = null;
+            modal = 'g';
+            render();
+            break;
+        case 'edit-gig':
+            {
+                const g = cg();
+                if (!g)
+                    break;
+                gF = {
+                    name: g.name,
+                    date: g.date || '',
+                    client: g.client || '',
+                    notes: g.notes || '',
+                    type: g.type || 'show'
+                };
+                gEid = g.id;
+                modal = 'g';
+                render();
+                break;
+            }
+        case 'save-g':
+            {
+                const n=document.getElementById('gf-name')?.value.trim();
+                if (!n)
+                    break;
+                const ng = {
+                    name: n,
+                    date: document.getElementById('gf-date')?.value || '',
+                    client: document.getElementById('gf-client')?.value || '',
+                    notes: document.getElementById('gf-notes')?.value || '',
+                    type: document.getElementById('gf-type')?.value || 'show'
+                };
+                if (gEid)
+                    G = G.map(g => g.id === gEid ? {
+                        ...g,
+                        ...ng
+                    } : g);
+                else {
+                    const newg = {
+                        id: uid(),
+                        ...ng,
+                        routineIds: [],
+                        createdFrom: null
+                    };
+                    G = [...G, newg];
+                    gid = newg.id;
+                    view = 'gig';
+                }
+                modal = null;
+                await save();
+                render();
+                break;
+            }
+        case 'open-gig':
+            gid = id;
+            view = 'gig';
+            render();
+            break;
+        case 'del-g':
+            if (!confirm('Delete this gig? This cannot be undone.'))
+                break;
+            G = G.filter(g => g.id !== id);
+            if (gid === id) {
+                view = 'gigs';
+                gid = null;
+            }
+            await save();
+            render();
+            break;
+        case 'dup-gig':
+            {
+                const src = cg();
+                if (!src)
+                    break;
+                dFr = src.id;
+                dN = src.name + ' — Copy';
+                modal = 'dup';
+                render();
+                break;
+            }
+        case 'dup-gig2':
+            {
+                const src = G.find(g => g.id === id);
+                if (!src)
+                    break;
+                dFr = id;
+                dN = src.name + ' — Copy';
+                modal = 'dup';
+                render();
+                break;
+            }
+        case 'save-dup':
+            {
+                const n=document.getElementById('dup-name')?.value.trim();
+                if (!n)
+                    break;
+                const src = G.find(g => g.id === dFr);
+                if (!src)
+                    break;
+                const ng = {
+                    ...src,
+                    id: uid(),
+                    name: n,
+                    date: '',
+                    createdFrom: src.id,
+                    type: 'show'
+                };
+                G = [...G, ng];
+                gid = ng.id;
+                view = 'gig';
+                modal = null;
+                await save();
+                render();
+                break;
+            }
+        case 'set-gig-type':
+            {
+                gF.type = v;
+                const h = document.getElementById('gf-type');
+                if (h)
+                    h.value = v;
+                rModal();
+                break;
+            }
+        case 'open-picker':
+            pCx = [];
+            pQ = '';
+            modal = 'picker';
+            render();
+            break;
+        case 'pk-cx':
+            pCx = pCx.includes(v) ? pCx.filter(x => x !== v) : [...pCx, v];
+            rModal();
+            break;
+        case 'add-to-gig':
+            {
+                const g = cg();
+                if (!g || g.routineIds.includes(id))
+                    break;
+                G = G.map(g => g.id === gid ? {
+                    ...g,
+                    routineIds: [...g.routineIds, id]
+                } : g);
+                await save();
+                rModal();
+                break;
+            }
+        case 'rem-from-gig':
+            G = G.map(g => g.id === gid ? {
+                ...g,
+                routineIds: g.routineIds.filter(x => x !== id)
+            } : g);
+            await save();
+            if (modal === 'picker')
+                rModal();
+            else
+                render();
+            break;
+        case 'mv-up':
+            {
+                const g = cg();
+                if (!g)
+                    break;
+                const ids = [...g.routineIds],
+                    i = ids.indexOf(id);
+                if (i <= 0)
+                    break;
+                [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]];
+                G = G.map(g => g.id === gid ? {
+                    ...g,
+                    routineIds: ids
+                } : g);
+                await save();
+                render();
+                break;
+            }
+        case 'mv-dn':
+            {
+                const g = cg();
+                if (!g)
+                    break;
+                const ids = [...g.routineIds],
+                    i = ids.indexOf(id);
+                if (i >= ids.length - 1)
+                    break;
+                [ids[i], ids[i + 1]] = [ids[i + 1], ids[i]];
+                G = G.map(g => g.id === gid ? {
+                    ...g,
+                    routineIds: ids
+                } : g);
+                await save();
+                render();
+                break;
+            }
+        case 'close-modal':
+            modal = null;
+            render();
+            break;
         }
     });
 
@@ -2283,3 +2266,30 @@
     </script>
 </body>
 </html>
+}else if(modal==='g'){
+    ov.innerHTML=`
+<div style="${bx()}" id="mb">
+    ${mt(gEid?'Edit Gig':'New Gig')}
+          
+    <div style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+            ${lb('Type')}
+            <div style="display:flex;gap:8px;margin-top:4px;">
+
+                          ${['show','template'].map(t=>`
+                <button data-a="set-gig-type" data-v="${t}" style="flex:1;padding:9px;border-radius:8px;border:2px solid ${(gF.type||'show')===t?K.go:K.br};background:${(gF.type||'show')===t?K.go+'22':'transparent'};color:${(gF.type||'show')===t?K.go:K.dm};cursor:pointer;font-family:inherit;font-size:13px;font-weight:${(gF.type||'show')===t?700:400};">${t==='show'?'🎭 Show Set':'📋 Template'}</button>
+                `).join('')}
+                        
+            </div>
+            <input id="gf-type" type="hidden" value="${gF.type||'show'}">
+        </div>
+        <div>${lb('Name')}${inp('gf-name',gF.name,gF.type==='template'?"e.g. Corporate 45-min Set":"e.g. Jennifer's Birthday Party")}</div>
+        <div>${lb('Date')}${inp('gf-date',gF.date||'','','date')}</div>
+        <div>${lb('Client / Event')}${inp('gf-client',gF.client||'','e.g. Jennifer M.')}</div>
+        <div>${lb('Notes')}${ta('gf-notes',gF.notes||'','Venue, set length, requests…',3)}</div>
+    </div>
+
+          ${ma(btn('Cancel','data-a="close-modal"')+btn(gEid?'Save Changes':'Create Gig','data-a="save-g"','go'))}
+</div>
+`;
+
