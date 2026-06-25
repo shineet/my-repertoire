@@ -1762,7 +1762,7 @@
         <div style="background:#0F1120;border-radius:8px;padding:16px;font-size:13px;color:#888CAA;line-height:1.75;white-space:pre-wrap;font-family:inherit;">${
             esc(r.notes)}</div>
       </div>` : ''}
-      ${ma(btn('Close', 'data-a="close-modal"') + btn('Edit Routine', `data-a="edit-from-detail" data-id="${r.id}"`, `go`))}
+      ${ma(btn('Delete', `data-a="del-r" data-id="${r.id}"`, 're') + btn('Close', 'data-a="close-modal"') + btn('Edit Routine', `data-a="edit-from-detail" data-id="${r.id}"`, `go`))}
     </div>`
             ;
         }
@@ -1913,6 +1913,18 @@
             detailId = id;
             modal = 'detail';
             rModal();
+            break;
+        case 'del-r':
+            if (!confirm('Delete this routine? This cannot be undone.'))
+                break;
+            R = R.filter(r => r.id !== id);
+            G = G.map(g => ({
+                ...g,
+                routineIds: g.routineIds.filter(x => x !== id)
+            }));
+            modal = null;
+            await save();
+            render();
             break;
         case 'edit-from-detail':
             {
