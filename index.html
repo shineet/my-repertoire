@@ -1331,19 +1331,9 @@
     ];
 
     // App State
-    // Global error handler — prevents blank screen
-    window.onerror = function(msg, src, line, col, err) {
-        console.error('Repertoire error:', msg, 'line', line);
-        var app = document.getElementById('app');
-        if (app && !app.innerHTML.trim()) {
-            app.innerHTML = '<div style="padding:40px;color:#F0EDE6;font-family:sans-serif"><h2 style="color:#C9A047">Something went wrong</h2><p style="color:#9CA3AF">' + msg + '</p><button onclick="window.location.href=window.location.pathname" style="background:#C9A047;color:#000;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:14px;font-weight:600">Reload App</button></div>';
-        }
-        return true;
-    };
-
     let R = [],
         G = [],
-        view = 'gigs',
+        view = 'master',
         gid = null,
         modal = null,
         detailId = null;
@@ -1382,12 +1372,9 @@
     const cg = () => G.find(g => g.id === gid);
     const gr = () => {
         const g = cg();
-        return g && g.routineIds ? g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean) : [];
+        return g ? g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean) : [];
     };
-    const inG = id => {
-        const g = cg();
-        return !!(g && g.routineIds && g.routineIds.includes(id));
-    };
+    const inG = id => !!cg()?.routineIds.includes(id);
 
     // Firebase
     async function fbGet(path) {
@@ -1426,17 +1413,13 @@
                     [r.id]: r
                 }), {}));
             }
-            G = data && data.gigs ? Object.values(data.gigs).map(g => ({
-                ...g,
-                routineIds: g.routineIds || []
-            })) : [];
+            G = data && data.gigs ? Object.values(data.gigs) : [];
             showSync('✓ Loaded');
         } catch (e) {
             R = [...MY];
             G = [];
             showSync('Offline — using local data', '#C9507A');
         }
-
         render();
         setInterval(sync, 20000);
     }
@@ -1465,17 +1448,12 @@
     async function sync() {
         if (Date.now() - lastSave < 15000)
             return;
-        if (modal)
-            return; // never sync-render while a modal is open — would wipe user input
         try {
             const data = await fbGet('/');
             if (!data)
                 return;
             const newR = data.routines ? Object.values(data.routines) : null;
-            const newG = data.gigs ? Object.values(data.gigs).map(g => ({
-                ...g,
-                routineIds: g.routineIds || []
-            })) : null;
+            const newG = data.gigs ? Object.values(data.gigs) : null;
             const ch = JSON.stringify({
                 r: newR,
                 g: newG
@@ -1517,12 +1495,12 @@
 
     // Header
     function rHeader() {
-        const nav = (v, l, mv) => `<button onclick="modal=null;document.getElementById('ov').style.display='none';view='${v}';render();" style="background:${view === mv || view === v ? '#161829' : 'transparent'};color:${view === mv || view === v ? '#C9A047' : '#555E7A'};border:1px solid ${view === mv || view === v ? '#1E2140' : 'transparent'};border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;">${l}</button>`;
+        const nav = (v, l, mv) => `<button data-a="nav-${v}" style="background:${view === mv || view === v ? '#161829' : 'transparent'};color:${view === mv || view === v ? '#C9A047' : '#555E7A'};border:1px solid ${view === mv || view === v ? '#1E2140' : 'transparent'};border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;">${l}</button>`;
         let btns = '';
         if (view === 'master')
             btns = `<span style="font-size:12px;color:#555E7A;align-self:center;">${R.length} routines</span> ` + btn('+ Routine', 'data-a="open-add-r"', 'go');
         else if (view === 'gigs')
-            btns = btn('+ New Gig', 'data-a="open-add-g"', 'go') + ' ' + btn('+ Template', 'data-a="open-add-t"', 'ot');
+            btns = btn('+ New Gig', 'data-a="open-add-g"', 'go');
         else if (view === 'gig') {
             const g = cg();
             btns = btn('← Back', 'data-a="nav-gigs"', 'gh', true) + ' ' + btn('Edit', 'data-a="edit-gig"', 'ot', true) + ' ' + btn('Duplicate', 'data-a="dup-gig"', 'ot', true) + ' ' + btn('+ Add Routines', 'data-a="open-picker"', 'go', true);
@@ -1537,76 +1515,6 @@
     }
 
     // Master list view
-    var _mExp = {}; // expanded state for master list
-
-    // Auto-save with debounce
-    var _asTimers = {};
-    function autoSaveRoutine(el) {
-        var id = el.dataset.rid,
-            field = el.dataset.field,
-            value = el.value;
-        var r = R.find(function(x) {
-            return x.id === id;
-        });
-        if (!r)
-            return;
-        if (field === 'duration')
-            r.duration = parseInt(value, 10) || 0;
-        else
-            r[field] = value;
-        var ind = document.getElementById('as-' + id);
-        if (ind)
-            ind.textContent = 'Saving…';
-        clearTimeout(_asTimers[id]);
-        _asTimers[id] = setTimeout(async function() {
-            await save();
-            var ind2 = document.getElementById('as-' + id);
-            if (ind2) {
-                ind2.textContent = '✓ Saved';
-                setTimeout(function() {
-                    if (ind2)
-                        ind2.textContent = '';
-                }, 2000);
-            }
-        }, 800);
-    }
-
-    function editRoutine(id) {
-        var r = R.find(function(x) {
-            return x.id === id;
-        });
-        if (!r)
-            return;
-        rF = {
-            name: r.name,
-            duration: r.duration,
-            difficulty: r.difficulty,
-            status: r.status,
-            roles: [...r.roles],
-            contexts: [...r.contexts],
-            notes: r.notes
-        };
-        rEid = id;
-        modal = 'r';
-        render();
-    }
-
-    async function mvMaster(id, dir) {
-        var i = R.findIndex(function(r) {
-            return r.id === id;
-        });
-        if (i < 0)
-            return;
-        var j = i + dir;
-        if (j < 0 || j >= R.length)
-            return;
-        var tmp = R[i];
-        R[i] = R[j];
-        R[j] = tmp;
-        await save();
-        render();
-    }
-
     function rMaster() {
         const fil = R.filter(r => {
             if (stF !== 'All' && r.status !== stF)
@@ -1619,270 +1527,141 @@
                 return false;
             return true;
         });
+        const dRows = fil.map((r, i) => `<div data-a="open-detail" data-id="${r.id}" class="desk-row" style="${GCOL}padding:10px 16px;align-items:center;border-bottom:${i < fil.length - 1 ? '1px solid #1E2140' : 'none'};" data-hov="1">
+    <div style="font-weight:500;">${esc(r.name)}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;">${r.contexts.map(c => bdg(c, CC[c], true)).join('')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;">${r.roles.map(rl => bdg(rl, RC[rl], true)).join('')}</div>
+    <div style="font-size:13px;color:#888CAA;">${fmt(r.duration)}</div>
+    <div style="font-size:12px;color:#555E7A;">${esc(r.difficulty)}</div>
+    <div>${bdg(r.status, SC[r.status] || '#888CAA', true)}</div>
+  </div>`
+        ).join('');
+        const mCards = fil.map(r => `<div data-a="open-detail" data-id="${r.id}" class="mob-card" style="background:#161829;border-radius:10px;border:1px solid #1E2140;padding:14px;margin-bottom:10px;cursor:pointer;">
+    <div style="font-weight:600;font-size:15px;margin-bottom:8px;">${esc(r.name)}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${r.contexts.map(c => bdg(c, CC[c], true)).join('')}${r.roles.map(rl => bdg(rl, RC[rl], true)).join('')}</div>
+    <div style="display:flex;gap:12px;align-items:center;">${bdg(r.status, SC[r.status] || '#888CAA', true)}<span style="font-size:12px;color:#888CAA;">⏱ ${fmt(r.duration)}</span><span style="font-size:11px;color:#555E7A;">${esc(r.difficulty)}</span></div>
+  </div>`
+        ).join('');
+        return `<div style="padding:14px 20px;">
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;align-items:center;">
+      <span style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;">Context</span>
+      ${
 
-        const rows = fil.map(function(r) {
-            var exp = !!_mExp[r.id];
-            var ridx = fil.indexOf(r);
-            var header = ''
-            + '<div style="display:flex;align-items:center;padding:12px 14px;gap:8px;">'
-            + '<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;margin-right:4px;">'
-            + (ridx > 0 ? '<button data-mv="up" data-rid="' + r.id + '" onclick="event.stopPropagation();mvMaster(this.dataset.rid,-1)" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▲</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▲</span>')
-            + '<span style="font-size:11px;color:#555E7A;font-weight:700;">' + (ridx + 1) + '</span>'
-            + (ridx < fil.length - 1 ? '<button data-mv="dn" data-rid="' + r.id + '" onclick="event.stopPropagation();mvMaster(this.dataset.rid,1)" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▼</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▼</span>')
-            + '</div>'
-            + '<div data-a="toggle-mexp" data-id="' + r.id + '" style="flex:1;min-width:0;cursor:pointer;display:flex;align-items:center;gap:8px;">'
-            + '<span style="font-size:12px;color:#555E7A;flex-shrink:0;display:inline-block;transform:' + (exp ? 'rotate(90deg)' : 'rotate(0deg)') + ';transition:transform .15s;">▶</span>'
-            + '<div style="min-width:0;">'
-            + '<div style="font-weight:600;font-size:15px;margin-bottom:5px;">' + esc(r.name) + '</div>'
-            + '<div style="display:flex;gap:4px;flex-wrap:wrap;">'
-            + r.contexts.map(function(c) {
-                return bdg(c, CC[c], true);
-            }).join('')
-            + r.roles.map(function(rl) {
-                return bdg(rl, RC[rl], true);
-            }).join('')
-            + '</div>'
-            + '</div>'
-            + '</div>'
-            + '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">'
-            + '<span style="font-size:12px;color:#888CAA;">⏱ ' + fmt(r.duration) + '</span>'
-            + '<span style="font-size:11px;color:#555E7A;">' + esc(r.difficulty) + '</span>'
-            + bdg(r.status, SC[r.status] || '#888CAA', true)
-            + '<button data-rid="' + r.id + '" onclick="event.stopPropagation();editRoutine(this.dataset.rid)" style="background:#1E2140;border:none;color:#C9A047;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;">Edit</button>'
-            + '</div>'
-            + '</div>';
-            var notes = exp
-            ? '<div style="border-top:1px solid #1E2140;padding:14px 16px 16px 14px;background:#0F1120;">'
-            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
-            + '<div>'
-            + '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Duration (mins)</div>'
-            + '<input type="number" value="' + r.duration + '" data-rid="' + r.id + '" data-field="duration" oninput="autoSaveRoutine(this)" '
-            + 'style="background:#161829;border:1px solid #2E3260;border-radius:6px;padding:6px 10px;color:#F0EDE6;font-size:13px;width:80px;font-family:inherit;outline:none;">'
-            + '</div>'
-            + '<div>'
-            + '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Difficulty</div>'
-            + '<select data-rid="' + r.id + '" data-field="difficulty" oninput="autoSaveRoutine(this)" '
-            + 'style="background:#161829;border:1px solid #2E3260;border-radius:6px;padding:6px 10px;color:#F0EDE6;font-size:13px;font-family:inherit;outline:none;">'
-            + ['Beginner', 'Intermediate', 'Advanced'].map(function(d) {
-                return '<option' + (r.difficulty === d ? ' selected' : '') + '>' + d + '</option>';
-            }).join('')
-            + '</select>'
-            + '</div>'
-            + '</div>'
-            + '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Notes &amp; Method</div>'
-            + '<textarea data-rid="' + r.id + '" data-field="notes" oninput="autoSaveRoutine(this)" rows="6" '
-            + 'style="width:100%;background:#161829;border:1px solid #2E3260;border-radius:6px;padding:10px;color:#F0EDE6;font-size:13px;line-height:1.75;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;">'
-            + esc(r.notes || '')
-            + '</textarea>'
-            + '<div id="as-' + r.id + '" style="font-size:11px;color:#4E9C81;margin-top:4px;min-height:16px;"></div>'
-            + '</div>'
-            : '';
-            return '<div style="background:#161829;border-radius:10px;border:1px solid ' + (exp ? '#2E3260' : '#1E2140') + ';margin-bottom:8px;overflow:hidden;">'
-            + header + notes + '</div>';
-        }).join('');
+        CTX.map(c => chip(c, CC[c], cxF.includes(c), `data-a="tog-cx" data-v="${esc(c)}"`)).join('')}
+      <div style="width:1px;height:16px;background:#1E2140;margin:0 2px;"></div>
+      <span style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;">Role</span>
+      ${
 
-        const anyExp = Object.keys(_mExp).some(function(k) {
-            return _mExp[k];
-        });
+        ROLES.map(r => chip(r, RC[r], roF.includes(r), `data-a="tog-ro" data-v="${esc(r)}"`)).join('')}
+    </div>
+    <div style="display:flex;gap:5px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
+      <input id="srch" value="${
 
-        return '<div style="padding:14px 20px;">'
+        esc(q)}" placeholder="Search…" style="background:#0F1120;border:1px solid #1E2140;border-radius:8px;padding:7px 12px;color:#F0EDE6;font-size:13px;outline:none;width:160px;font-family:inherit;">
+      ${['All', 'Active', 'In Development', 'Retired'].map(s => chip(s, '', stF === s, `data-a="tog-st" data-v="${esc(s)}"`)).join('')}
+      <span style="margin-left:auto;color:#555E7A;font-size:12px;">${fil.length} shown</span>
+    </div>
+    <div class="desk-table" style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">
+      <div class="desk-row" style="${
 
-        + // Filters
-        '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;align-items:center;">'
-        + '<span style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;">Context</span>'
-        + CTX.map(function(c) {
-            return chip(c, CC[c], cxF.includes(c), 'data-a="tog-cx" data-v="' + esc(c) + '"');
-        }).join('')
-        + '<div style="width:1px;height:16px;background:#1E2140;margin:0 2px;"></div>'
-        + '<span style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;">Role</span>'
-        + ROLES.map(function(r) {
-            return chip(r, RC[r], roF.includes(r), 'data-a="tog-ro" data-v="' + esc(r) + '"');
-        }).join('')
-        + '</div>'
-        + '<div style="display:flex;gap:5px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">'
-        + '<input id="srch" value="' + esc(q) + '" placeholder="Search…" style="background:#0F1120;border:1px solid #1E2140;border-radius:8px;padding:7px 12px;color:#F0EDE6;font-size:13px;outline:none;width:160px;font-family:inherit;">'
-        + ['All', 'Active', 'In Development', 'Retired'].map(function(s) {
-            return chip(s, '', stF === s, 'data-a="tog-st" data-v="' + esc(s) + '"');
-        }).join('')
-        + '<span style="margin-left:auto;color:#555E7A;font-size:12px;">' + fil.length + ' shown</span>'
-        + '<button onclick="' + (anyExp ? '_mExp={};' : 'fil.forEach(function(r){_mExp[r.id]=true;});') + 'render()" style="background:#1E2140;border:none;color:#888CAA;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">' + (anyExp ? '⊟ Collapse All' : '⊞ Expand All') + '</button>'
-        + '</div>'
-        + (fil.length
-        ? rows
-        : '<div style="padding:40px 0;text-align:center;color:#555E7A;">No routines match your filters.</div>')
-        + '</div>';
-    }
-
-    // Gigs list view
-    function gigCard(g) {
-        const grs = (g.routineIds || []).map(id => R.find(r => r.id === id)).filter(Boolean);
-        const src = g.createdFrom?G.find(x => x.id === g.createdFrom)?.name : '';
-        const isTemplate = (g.client || '').toLowerCase() === 'template';
-        return `<div style="background:${isTemplate ? '#0f1020' : '#161829'};border-radius:12px;border:1px solid ${isTemplate ? '#2E3260' : '#1E2140'};padding:20px;${isTemplate ? 'opacity:0.85;' : ''}}">
-    <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;margin-bottom:5px;">${esc(g.name)}</div>
-    ${g.client && !isTemplate ? `<div style="font-size:12px;color:#555E7A;margin-bottom:3px;">👤 ${esc(g.client)}</div>` : ''}
-    ${g.date ? `<div style="font-size:12px;color:#888CAA;margin-bottom:3px;">📅 ${esc(g.date)}</div>` : ''}
-    <div style="display:flex;gap:14px;margin:8px 0;">${['' + grs.length + ' routines', '⏱ ' + fmt(tot(grs))].map(t => `<span style="font-size:12px;color:#888CAA;">${t}</span>`).join('')}</div>
-    ${src ? `<div style="font-size:11px;color:#555E7A;margin-bottom:10px;font-style:italic;">Duplicated from "${esc(src)}"</div>` : ''}
-    ${g.notes ? `<div style="font-size:12px;color:#555E7A;margin-bottom:10px;">${esc(g.notes)}</div>` : ''}
-    <div style="display:flex;gap:6px;flex-wrap:wrap;">${btn('Open Setlist', `data-a="open-gig" data-id="${g.id}"`, `gh`, true)}${btn('Duplicate', `data-a="dup-gig2" data-id="${g.id}"`, `ot`, true)}${btn('✕', `data-a="del-g" data-id="${g.id}"`, `re`, true)}</div>
+        GCOL}background:#161829;border-bottom:1px solid #1E2140;padding:8px 16px;">${['Routine (tap for full notes)', 'Context', 'Role', 'Time', 'Difficulty', 'Status'].map(h => `<div style="${TH}">${h}</div>`).join('')}</div>
+      ${fil.length ? dRows : `<div style="padding:40px 0;text-align:center;color:#555E7A;">No routines match your filters.</div>`}
+    </div>
+    <div>${
+        fil.length ? mCards : `<div style="padding:40px 0;text-align:center;color:#555E7A;">No routines match.</div>`}</div>
   </div>`
         ;
     }
 
+    // Gigs list view
     function rGigs() {
-        var today = new Date().toISOString().slice(0, 10);
-        var upcoming = [],
-            past = [],
-            templates = [];
-        G.forEach(function(g) {
-            var isT = (g.client || '').toLowerCase() === 'template';
-            if (isT)
-                templates.push(g);
-            else if (g.date && g.date < today)
-                past.push(g);
-            else
-                upcoming.push(g);
-        });
-        upcoming.sort(function(a, b) {
-            return (a.date || '').localeCompare(b.date || '');
-        });
-        past.sort(function(a, b) {
-            return (b.date || '').localeCompare(a.date || '');
-        });
-        templates.sort(function(a, b) {
-            return (a.name || '').localeCompare(b.name || '');
-        });
-
         if (!G.length)
-            return '<div style="text-align:center;padding:80px 20px;color:#555E7A;">' +
-            '<div style="font-family:\'Playfair Display\',serif;font-size:24px;margin-bottom:10px;color:#C9A047;">No gigs yet</div>' +
-            '<div style="font-size:14px;margin-bottom:24px;">Create your first show setlist.</div>' +
-            '<div style="display:flex;gap:10px;justify-content:center;">' + btn('+ New Gig', 'data-a="open-add-g"', 'go') + ' ' + btn('+ Template', 'data-a="open-add-t"', 'ot') + '</div></div>';
+            return `<div style="text-align:center;padding:80px 20px;color:#555E7A;">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:10px;color:#C9A047;">No gigs yet</div>
+    <div style="font-size:14px;margin-bottom:24px;">Create your first show setlist.</div>
+    ${
 
-        function makeGrid(items) {
-            return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;">' + items.map(gigCard).join('') + '</div>';
-        }
-        function makeSection(items, label, addBtn) {
-            if (!items.length)
-                return '';
-            return '<div style="border-top:1px solid #1E2140;padding-top:24px;margin-top:24px;">' +
-            '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">' +
-            '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#555E7A;font-weight:600;">' + label + '</div>' +
-            '<div style="flex:1;height:1px;background:#1E2140;"></div>' +
-            (addBtn || '') +
-            '</div>' +
-            makeGrid(items) +
-            '</div>';
-        }
-
-        var upcomingHtml = upcoming.length
-        ? makeGrid(upcoming)
-        : '<div style="text-align:center;padding:40px 20px;color:#555E7A;font-size:14px;">No upcoming gigs yet. ' + btn('+ New Gig', 'data-a="open-add-g"', 'go') + '</div>';
-
-        return '<div style="padding:16px 20px;">' +
-        upcomingHtml +
-        makeSection(past, 'Past Gigs', '') +
-        makeSection(templates, 'Templates', btn('+ Template', 'data-a="open-add-t"', 'ot')) +
-        '</div>';
+            btn('+ New Gig', 'data-a="open-add-g"', 'go')}
+  </div>`
+            ;
+        const sorted = [...G].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        return `<div style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;">
+    ${sorted.map(g => {const grs = g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean);const src = g.createdFrom?G.find(x => x.id === g.createdFrom)?.name : '';return `<div style="background:#161829;border-radius:12px;border:1px solid #1E2140;padding:20px;">
+      <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;margin-bottom:5px;">${esc(g.name)}</div>
+      ${g.client ? `<div style="font-size:12px;color:#555E7A;margin-bottom:3px;">👤 ${esc(g.client)}</div>` : ''}
+      ${g.date ? `<div style="font-size:12px;color:#888CAA;margin-bottom:3px;">📅 ${esc(g.date)}</div>` : ''}
+      <div style="display:flex;gap:14px;margin:8px 0;">${['' + grs.length + ' routines', '⏱ ' + fmt(tot(grs))].map(t => `<span style="font-size:12px;color:#888CAA;">${t}</span>`).join('')}</div>
+      ${src ? `<div style="font-size:11px;color:#555E7A;margin-bottom:10px;font-style:italic;">Duplicated from "${esc(src)}"</div>` : ''}
+      ${g.notes ? `<div style="font-size:12px;color:#555E7A;margin-bottom:10px;">${esc(g.notes)}</div>` : ''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">${btn('Open Setlist', `data-a="open-gig" data-id="${g.id}"`, `gh`, true)}${btn('Duplicate', `data-a="dup-gig2" data-id="${g.id}"`, `ot`, true)}${btn('✕', `data-a="del-g" data-id="${g.id}"`, `re`, true)}</div>
+    </div>`;}).join('')}
+  </div>`
+        ;
     }
 
-    // Gig detail view — single draggable list with expand/collapse
-    var _expanded = {}; // tracks which routine IDs are expanded
-
+    // Gig detail view
     function rGigDetail() {
         const g = cg();
         if (!g)
             return '';
         const grs = gr();
+        const rows = grs.map((r, i) => `<div style="${DCOL}padding:10px 16px;align-items:center;border-bottom:${i < grs.length - 1 ? '1px solid #1E2140' : 'none'};" data-hov="1">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:1px;">
+      ${
+        i > 0 ? `<button data-a="mv-up" data-id="${r.id}" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:12px;padding:2px;">▲</button>` : `<span style="color:#1E2140;font-size:12px;padding:2px;">▲</span>`}
+      <span style="font-size:11px;color:#555E7A;font-weight:600;">${i + 1}</span>
+      ${i < grs.length - 1 ? `<button data-a="mv-dn" data-id="${r.id}" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:12px;padding:2px;">▼</button>` : `<span style="color:#1E2140;font-size:12px;padding:2px;">▼</span>`}
+    </div>
+    <div data-a="open-detail" data-id="${
+        r.id}" style="cursor:pointer;font-weight:500;">${esc(r.name)}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;">${r.contexts.map(c => bdg(c, CC[c], true)).join('')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;">${r.roles.map(rl => bdg(rl, RC[rl], true)).join('')}</div>
+    <div style="font-size:13px;color:#888CAA;">${fmt(r.duration)}</div>
+    ${btn('Remove', `data-a="rem-from-gig" data-id="${r.id}"`, `re`, true)}
+  </div>`
+        ).join('');
+        const mRows = grs.map((r, i) => `<div style="background:#161829;border-radius:8px;border:1px solid #1E2140;padding:12px;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:14px;color:#555E7A;font-weight:700;min-width:26px;text-align:center;">${
+        i + 1}</span>
+      <div style="flex:1;">
+        <div data-a="open-detail" data-id="${
+        r.id}" style="font-weight:500;cursor:pointer;margin-bottom:4px;">${esc(r.name)}</div>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;">${r.contexts.map(c => bdg(c, CC[c], true)).join('')}${r.roles.map(rl => bdg(rl, RC[rl], true)).join('')}</div>
+      </div>
+      <span style="font-size:12px;color:#888CAA;">${
+        fmt(r.duration)}</span>
+      ${btn('✕', `data-a="rem-from-gig" data-id="${r.id}"`, `re`, true)}
+    </div>
+  </div>`
 
-        const rows = grs.map((r, i) => {
-            const exp = !!_expanded[r.id];
-            return '<div id="sl-row-' + r.id + '" data-rid="' + r.id + '" class="sl-row" style="background:#161829;border-radius:10px;border:1px solid ' + (exp ? '#2E3260' : '#1E2140') + ';margin-bottom:8px;overflow:hidden;transition:border-color .15s;">'
+        ).join('');
+        return `<div style="padding:16px 20px;">
+    <div style="margin-bottom:18px;">
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px;">${
+        esc(g.name)}</div>
+      <div style="font-size:12px;color:#555E7A;">${[g.client, g.date, grs.length + ' routines', '⏱ ' + fmt(tot(grs))].filter(Boolean).join(' · ')}</div>
+      ${g.notes ? `<div style="font-size:13px;color:#888CAA;margin-top:5px;">${esc(g.notes)}</div>` : ''}
+    </div>
+    ${
+        !grs.length ? `<div style="text-align:center;padding:50px 0;color:#555E7A;"><div style="margin-bottom:16px;">No routines in this setlist yet.</div>${btn('+ Add from Master List', 'data-a="open-picker"', 'go')}</div>` : `<div>
+      <div class="desk-table" style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">
+        <div class="desk-row" style="${
+        DCOL}background:#161829;border-bottom:1px solid #1E2140;padding:8px 16px;">${['#', 'Routine', 'Context', 'Role', 'Time', ''].map(h => `<div style="${TH}">${h}</div>`).join('')}</div>
+        ${rows}
+        <div style="background:#161829;border-top:1px solid #1E2140;padding:10px 16px;display:flex;justify-content:flex-end;gap:20px;">
+          <span style="font-size:12px;color:#555E7A;">${
+        grs.length} routines in set</span>
+          <span style="font-size:13px;color:#C9A047;font-weight:700;">Total: ${fmt(tot(grs))}</span>
+        </div>
+      </div>
+      <div class="mob-card" style="display:block;">${
 
-            + // ── Main row
-            '<div style="display:flex;align-items:center;gap:0;padding:12px 14px;">'
-
-            + // Up/Down arrows + number
-            '<div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;margin-right:8px;">'
-            + (i > 0 ? '<button data-a="mv-up" data-id="' + r.id + '" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▲</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▲</span>')
-            + '<span style="font-size:11px;color:#555E7A;font-weight:700;">' + (i + 1) + '</span>'
-            + (i < grs.length - 1 ? '<button data-a="mv-dn" data-id="' + r.id + '" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;line-height:1;">▼</button>' : '<span style="font-size:11px;padding:1px 4px;color:#1E2140;">▼</span>')
-            + '</div>'
-
-            + // Expand toggle + name
-            '<div data-a="toggle-expand" data-id="' + r.id + '" style="flex:1;cursor:pointer;padding:0 10px;">'
-            + '<div style="display:flex;align-items:center;gap:8px;">'
-            + '<span style="font-size:13px;color:#555E7A;transition:transform .15s;display:inline-block;transform:' + (exp ? 'rotate(90deg)' : 'rotate(0deg)') + ';">▶</span>'
-            + '<span style="font-weight:600;font-size:15px;">' + esc(r.name) + '</span>'
-            + '</div>'
-            + '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;">'
-            + r.contexts.map(c => bdg(c, CC[c], true)).join('')
-            + r.roles.map(rl => bdg(rl, RC[rl], true)).join('')
-            + '</div>'
-            + '</div>'
-
-            + // Time
-            '<span style="font-size:13px;color:#888CAA;flex-shrink:0;margin-right:12px;">' + fmt(r.duration) + '</span>'
-
-            + // Edit button
-            '<button data-a="edit-from-detail" data-id="' + r.id + '" style="background:#1E2140;border:none;color:#C9A047;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;margin-right:6px;">Edit</button>'
-
-            + // Remove button
-            '<button data-a="rem-from-gig" data-id="' + r.id + '" style="background:#5c2020;border:none;color:#f8a0a0;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;">✕</button>'
-            + '</div>'
-
-            + (// ── Expanded notes (editable, auto-save)
-            exp
-            ? '<div style="border-top:1px solid #1E2140;padding:14px 16px 16px 14px;background:#0F1120;">'
-            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">'
-            + '<div>'
-            + '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Duration (mins)</div>'
-            + '<input type="number" value="' + r.duration + '" data-rid="' + r.id + '" data-field="duration" oninput="autoSaveRoutine(this)" '
-            + 'style="background:#161829;border:1px solid #2E3260;border-radius:6px;padding:6px 10px;color:#F0EDE6;font-size:13px;width:80px;font-family:inherit;outline:none;">'
-            + '</div>'
-            + '<div>'
-            + '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Difficulty</div>'
-            + '<select data-rid="' + r.id + '" data-field="difficulty" oninput="autoSaveRoutine(this)" '
-            + 'style="background:#161829;border:1px solid #2E3260;border-radius:6px;padding:6px 10px;color:#F0EDE6;font-size:13px;font-family:inherit;outline:none;">'
-            + ['Beginner', 'Intermediate', 'Advanced'].map(function(d) {
-                return '<option' + (r.difficulty === d ? ' selected' : '') + '>' + d + '</option>';
-            }).join('')
-            + '</select>'
-            + '</div>'
-            + '</div>'
-            + '<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Notes &amp; Method</div>'
-            + '<textarea data-rid="' + r.id + '" data-field="notes" oninput="autoSaveRoutine(this)" rows="6" '
-            + 'style="width:100%;background:#161829;border:1px solid #2E3260;border-radius:6px;padding:10px;color:#F0EDE6;font-size:13px;line-height:1.75;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;">'
-            + esc(r.notes || '')
-            + '</textarea>'
-            + '<div id="as-' + r.id + '" style="font-size:11px;color:#4E9C81;margin-top:4px;min-height:16px;"></div>'
-            + '</div>'
-            : '')
-            + '</div>';
-        }).join('');
-
-        const emptyState = '<div style="text-align:center;padding:50px 0;color:#555E7A;">'
-        + '<div style="margin-bottom:16px;">No routines in this setlist yet.</div>'
-        + btn('+ Add from Master List', 'data-a="open-picker"', 'go')
-        + '</div>';
-
-        const toolbar = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
-        + '<div style="display:flex;gap:8px;">'
-        + '<button onclick="Object.keys(_expanded).length?(_expanded={},render()):(_expanded={},gr().forEach(function(r){_expanded[r.id]=true;}),render())" '
-        + 'style="background:#1E2140;border:none;color:#888CAA;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">⊞ Toggle All</button>'
-        + '</div>'
-        + '<span style="font-size:13px;color:#C9A047;font-weight:700;">⏱ ' + fmt(tot(grs)) + ' · ' + grs.length + ' routines</span>'
-        + '</div>';
-
-        return '<div style="padding:16px 20px;">'
-        + '<div style="margin-bottom:16px;">'
-        + '<div style="font-family:Playfair Display,serif;font-size:22px;font-weight:700;margin-bottom:4px;">' + esc(g.name) + '</div>'
-        + '<div style="font-size:12px;color:#555E7A;">' + [g.client, g.date].filter(Boolean).join(' · ') + '</div>'
-        + (g.notes ? '<div style="font-size:13px;color:#888CAA;margin-top:5px;">' + esc(g.notes) + '</div>' : '')
-        + '</div>'
-        + (grs.length ? toolbar + '<div id="sl-list">' + rows + '</div>' : emptyState)
-        + '</div>';
+        mRows}<div style="text-align:right;padding:8px 4px;font-size:13px;color:#C9A047;font-weight:700;">Total: ${fmt(tot(grs))} · ${grs.length} routines</div></div>
+    </div>`
+        }
+  </div>`
+        ;
     }
 
     // Modals
@@ -1890,7 +1669,6 @@
         const ov = document.getElementById('ov');
         if (!modal) {
             ov.style.display = 'none';
-            ov.innerHTML = '';
             return;
         }
         ov.style.display = 'flex';
@@ -2028,11 +1806,7 @@
             setTimeout(() => {
                 const pk = document.getElementById('pk-q');
                 if (pk) {
-                    pk.value = pQ; // restore current search value after re-render
                     pk.focus();
-                    // place cursor at end
-                    const len = pk.value.length;
-                    pk.setSelectionRange(len, len);
                     pk.oninput = e => {
                         pQ = e.target.value;
                         rModal();
@@ -2042,34 +1816,9 @@
         }
     }
 
-    function syncGFFromDOM() {
-        // Only sync when the gig form is actually open and elements exist in DOM
-        try {
-            if (modal !== 'g')
-                return;
-            var n = document.getElementById('gf-name');
-            var d = document.getElementById('gf-date');
-            var c = document.getElementById('gf-client');
-            var nt = document.getElementById('gf-notes');
-            if (n && n.value !== undefined)
-                gF.name = n.value;
-            if (d && d.value !== undefined)
-                gF.date = d.value;
-            if (c && c.value !== undefined)
-                gF.client = c.value;
-            if (nt && nt.value !== undefined)
-                gF.notes = nt.value;
-        } catch (e) {}
-    }
-
     function render() {
-        syncGFFromDOM(); // preserve any typed values before re-rendering
-        // Always force-hide the overlay first so it never blocks clicks
-        var _ov = document.getElementById('ov');
-        if (!modal && _ov) {
-            _ov.style.display = 'none';
-            _ov.innerHTML = '';
-        }
+        const wasFocused = document.activeElement?.id === 'srch';
+        const cursorPos = wasFocused ? document.activeElement.selectionStart : null;
         let main = '';
         if (view === 'master')
             main = rMaster();
@@ -2080,11 +1829,17 @@
         document.getElementById('sc').innerHTML = rHeader() + main;
         rModal();
         const s = document.getElementById('srch');
-        if (s)
+        if (s) {
             s.oninput = e => {
                 q = e.target.value;
                 render();
             };
+            if (wasFocused) {
+                s.focus();
+                if (cursorPos !== null)
+                    s.setSelectionRange(cursorPos, cursorPos);
+            }
+        }
     }
 
     // Close modal clicking backdrop
@@ -2098,23 +1853,18 @@
     // All event handling
     document.getElementById('app').addEventListener('click', async function(e) {
         const el = e.target.closest('[data-a]');
-        if (!el) {
-            console.log('click: no data-a found on', e.target.tagName, e.target.className);
+        if (!el)
             return;
-        }
         const a = el.dataset.a,
             id = el.dataset.id,
             v = el.dataset.v;
-        console.log('click action:', a);
         switch (a) {
         case 'nav-master':
             view = 'master';
-            modal = null;
             render();
             break;
         case 'nav-gigs':
             view = 'gigs';
-            modal = null;
             render();
             break;
         case 'open-detail':
@@ -2215,17 +1965,6 @@
             modal = 'g';
             render();
             break;
-        case 'open-add-t':
-            gF = {
-                name: '',
-                date: '',
-                client: 'Template',
-                notes: ''
-            };
-            gEid = null;
-            modal = 'g';
-            render();
-            break;
         case 'edit-gig':
             {
                 const g = cg();
@@ -2259,14 +1998,11 @@
                         ...ng
                     } : g);
                 else {
-                    var _did = window._pendingDashId || null;
-                    window._pendingDashId = null;
                     const newg = {
                         id: uid(),
                         ...ng,
                         routineIds: [],
-                        createdFrom: null,
-                        dashboardId: _did
+                        createdFrom: null
                     };
                     G = [...G, newg];
                     gid = newg.id;
@@ -2280,15 +2016,6 @@
         case 'open-gig':
             gid = id;
             view = 'gig';
-            _expanded = {};
-            render();
-            break;
-        case 'toggle-expand':
-            _expanded[id] = !_expanded[id];
-            render();
-            break;
-        case 'toggle-mexp':
-            _mExp[id] = !_mExp[id];
             render();
             break;
         case 'del-g':
@@ -2360,14 +2087,11 @@
         case 'add-to-gig':
             {
                 const g = cg();
-                if (!g)
-                    break;
-                const _rids = g.routineIds || [];
-                if (_rids.includes(id))
+                if (!g || g.routineIds.includes(id))
                     break;
                 G = G.map(g => g.id === gid ? {
                     ...g,
-                    routineIds: [..._rids, id]
+                    routineIds: [...g.routineIds, id]
                 } : g);
                 await save();
                 rModal();
@@ -2376,7 +2100,7 @@
         case 'rem-from-gig':
             G = G.map(g => g.id === gid ? {
                 ...g,
-                routineIds: (g.routineIds || []).filter(x => x !== id)
+                routineIds: g.routineIds.filter(x => x !== id)
             } : g);
             await save();
             if (modal === 'picker')
@@ -2384,32 +2108,12 @@
             else
                 render();
             break;
-        case 'mv-up-m':
-            {
-                const i = R.findIndex(r => r.id === id);
-                if (i <= 0)
-                    break;
-                [R[i - 1], R[i]] = [R[i], R[i - 1]];
-                await save();
-                render();
-                break;
-            }
-        case 'mv-dn-m':
-            {
-                const i = R.findIndex(r => r.id === id);
-                if (i < 0 || i >= R.length - 1)
-                    break;
-                [R[i], R[i + 1]] = [R[i + 1], R[i]];
-                await save();
-                render();
-                break;
-            }
         case 'mv-up':
             {
                 const g = cg();
                 if (!g)
                     break;
-                const ids = [...(g.routineIds || [])],
+                const ids = [...g.routineIds],
                     i = ids.indexOf(id);
                 if (i <= 0)
                     break;
@@ -2427,7 +2131,7 @@
                 const g = cg();
                 if (!g)
                     break;
-                const ids = [...(g.routineIds || [])],
+                const ids = [...g.routineIds],
                     i = ids.indexOf(id);
                 if (i >= ids.length - 1)
                     break;
@@ -2447,53 +2151,7 @@
         }
     });
 
-    load().then(function() {
-        // Handle incoming link from Gig Dashboard — runs once on page load only
-        var search = window.location.search;
-        if (!search)
-            return;
-        var dashId = new URLSearchParams(search).get('gig');
-        var dashDate = new URLSearchParams(search).get('date') || '';
-        var dashEvent = new URLSearchParams(search).get('event') || '';
-        var dashName = new URLSearchParams(search).get('name') || '';
-        if (!dashId)
-            return;
-
-        // Remove params from URL so navigating/refreshing doesn't re-trigger
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-
-        var existing = null;
-        for (var i = 0; i < G.length; i++) {
-            if (G[i].dashboardId === dashId) {
-                existing = G[i];
-                break;
-            }
-        }
-
-        if (existing && existing.name) {
-            // Valid existing gig — open it
-            gid = existing.id;
-            view = 'gig';
-            render();
-        } else {
-            // No valid gig found — clear any stale match and create fresh
-            var gigName = dashEvent
-            ? dashEvent + (dashName ? ' - ' + dashName : '')
-            : (dashName || 'New Gig');
-            gF = {
-                name: gigName,
-                date: dashDate,
-                client: dashName,
-                notes: ''
-            };
-            window._pendingDashId = dashId;
-            gEid = null;
-            modal = 'g';
-            render();
-        }
-    });
+    load();
     </script>
 </body>
 </html>
