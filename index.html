@@ -1626,8 +1626,9 @@
             btn('+ New Gig', 'data-a="open-add-g"', 'go')}
   </div>`
             ;
-        const templates = G.filter(g => g.type === 'template');
-        const shows = G.filter(g => g.type !== 'template').sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        const isTemplate = g => g.type === 'template' || (g.client || '').toLowerCase() === 'template';
+        const templates = G.filter(isTemplate);
+        const shows = G.filter(g => !isTemplate(g)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
         const card = g => {
             const grs = g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean);
             const src = g.createdFrom?G.find(x => x.id === g.createdFrom)?.name : '';
