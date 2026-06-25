@@ -1900,308 +1900,313 @@
         const a = el.dataset.a,
             id = el.dataset.id,
             v = el.dataset.v;
-        switch (a) {
-        case 'nav-master':
-            view = 'master';
-            render();
-            break;
-        case 'nav-gigs':
-            view = 'gigs';
-            render();
-            break;
-        case 'open-detail':
-            detailId = id;
-            modal = 'detail';
-            rModal();
-            break;
-        case 'del-r':
-            if (!confirm('Delete this routine? This cannot be undone.'))
+        try {
+            switch (a) {
+            case 'nav-master':
+                view = 'master';
+                render();
                 break;
-            R = R.filter(r => r.id !== id);
-            G = G.map(g => ({
-                ...g,
-                routineIds: g.routineIds.filter(x => x !== id)
-            }));
-            modal = null;
-            await save();
-            render();
-            break;
-        case 'edit-from-detail':
-            {
-                const r = R.find(r => r.id === id);
-                if (!r)
+            case 'nav-gigs':
+                view = 'gigs';
+                render();
+                break;
+            case 'open-detail':
+                detailId = id;
+                modal = 'detail';
+                rModal();
+                break;
+            case 'del-r':
+                if (!confirm('Delete this routine? This cannot be undone.'))
                     break;
+                R = R.filter(r => r.id !== id);
+                G = G.map(g => ({
+                    ...g,
+                    routineIds: g.routineIds.filter(x => x !== id)
+                }));
+                modal = null;
+                await save();
+                render();
+                break;
+            case 'edit-from-detail':
+                {
+                    const r = R.find(r => r.id === id);
+                    if (!r)
+                        break;
+                    rF = {
+                        name: r.name,
+                        duration: r.duration,
+                        difficulty: r.difficulty,
+                        status: r.status,
+                        roles: [...r.roles],
+                        contexts: [...r.contexts],
+                        notes: r.notes
+                    };
+                    rEid = id;
+                    modal = 'r';
+                    rModal();
+                    break;
+                }
+            case 'open-add-r':
                 rF = {
-                    name: r.name,
-                    duration: r.duration,
-                    difficulty: r.difficulty,
-                    status: r.status,
-                    roles: [...r.roles],
-                    contexts: [...r.contexts],
-                    notes: r.notes
+                    name: '',
+                    duration: 5,
+                    difficulty: 'Intermediate',
+                    status: 'Active',
+                    roles: ['Feature'],
+                    contexts: ['Stage'],
+                    notes: ''
                 };
-                rEid = id;
+                rEid = null;
                 modal = 'r';
                 rModal();
                 break;
-            }
-        case 'open-add-r':
-            rF = {
-                name: '',
-                duration: 5,
-                difficulty: 'Intermediate',
-                status: 'Active',
-                roles: ['Feature'],
-                contexts: ['Stage'],
-                notes: ''
-            };
-            rEid = null;
-            modal = 'r';
-            render();
-            break;
-        case 'rf-cx':
-            rF.contexts = rF.contexts.includes(v) ? rF.contexts.filter(x => x !== v) : [...rF.contexts, v];
-            rModal();
-            break;
-        case 'rf-ro':
-            rF.roles = rF.roles.includes(v) ? rF.roles.filter(x => x !== v) : [...rF.roles, v];
-            rModal();
-            break;
-        case 'save-r':
-            {
-                const n=document.getElementById('rf-name')?.value.trim();
-                if (!n)
+            case 'rf-cx':
+                rF.contexts = rF.contexts.includes(v) ? rF.contexts.filter(x => x !== v) : [...rF.contexts, v];
+                rModal();
+                break;
+            case 'rf-ro':
+                rF.roles = rF.roles.includes(v) ? rF.roles.filter(x => x !== v) : [...rF.roles, v];
+                rModal();
+                break;
+            case 'save-r':
+                {
+                    const n=document.getElementById('rf-name')?.value.trim();
+                    if (!n)
+                        break;
+                    const nr = {
+                        name: n,
+                        duration: +(document.getElementById('rf-dur')?.value) || 5,
+                        difficulty:document.getElementById('rf-diff')?.value,
+                        status:document.getElementById('rf-stat')?.value,
+                        roles: [...rF.roles],
+                        contexts: [...rF.contexts],
+                        notes: document.getElementById('rf-notes')?.value || ''
+                    };
+                    if (rEid)
+                        R = R.map(r => r.id === rEid ? {
+                            ...r,
+                            ...nr
+                        } : r);
+                    else
+                        R = [...R, {
+                            id: uid(),
+                            ...nr
+                        }];
+                    modal = null;
+                    await save();
+                    render();
                     break;
-                const nr = {
-                    name: n,
-                    duration: +(document.getElementById('rf-dur')?.value) || 5,
-                    difficulty:document.getElementById('rf-diff')?.value,
-                    status:document.getElementById('rf-stat')?.value,
-                    roles: [...rF.roles],
-                    contexts: [...rF.contexts],
-                    notes: document.getElementById('rf-notes')?.value || ''
-                };
-                if (rEid)
-                    R = R.map(r => r.id === rEid ? {
-                        ...r,
-                        ...nr
-                    } : r);
-                else
-                    R = [...R, {
-                        id: uid(),
-                        ...nr
-                    }];
-                modal = null;
-                await save();
+                }
+            case 'tog-cx':
+                cxF = cxF.includes(v) ? cxF.filter(x => x !== v) : [...cxF, v];
                 render();
                 break;
-            }
-        case 'tog-cx':
-            cxF = cxF.includes(v) ? cxF.filter(x => x !== v) : [...cxF, v];
-            render();
-            break;
-        case 'tog-ro':
-            roF = roF.includes(v) ? roF.filter(x => x !== v) : [...roF, v];
-            render();
-            break;
-        case 'tog-st':
-            stF = v;
-            render();
-            break;
-        case 'open-add-g':
-            gF = {
-                name: '',
-                date: '',
-                client: '',
-                notes: ''
-            };
-            gEid = null;
-            modal = 'g';
-            render();
-            break;
-        case 'edit-gig':
-            {
-                const g = cg();
-                if (!g)
-                    break;
+            case 'tog-ro':
+                roF = roF.includes(v) ? roF.filter(x => x !== v) : [...roF, v];
+                render();
+                break;
+            case 'tog-st':
+                stF = v;
+                render();
+                break;
+            case 'open-add-g':
                 gF = {
-                    name: g.name,
-                    date: g.date || '',
-                    client: g.client || '',
-                    notes: g.notes || ''
+                    name: '',
+                    date: '',
+                    client: '',
+                    notes: ''
                 };
-                gEid = g.id;
+                gEid = null;
                 modal = 'g';
                 render();
                 break;
-            }
-        case 'save-g':
-            {
-                const n=document.getElementById('gf-name')?.value.trim();
-                if (!n)
-                    break;
-                const ng = {
-                    name: n,
-                    date: document.getElementById('gf-date')?.value || '',
-                    client: document.getElementById('gf-client')?.value || '',
-                    notes: document.getElementById('gf-notes')?.value || ''
-                };
-                if (gEid)
-                    G = G.map(g => g.id === gEid ? {
-                        ...g,
-                        ...ng
-                    } : g);
-                else {
-                    const newg = {
-                        id: uid(),
-                        ...ng,
-                        routineIds: [],
-                        createdFrom: null
+            case 'edit-gig':
+                {
+                    const g = cg();
+                    if (!g)
+                        break;
+                    gF = {
+                        name: g.name,
+                        date: g.date || '',
+                        client: g.client || '',
+                        notes: g.notes || ''
                     };
-                    G = [...G, newg];
-                    gid = newg.id;
-                    view = 'gig';
+                    gEid = g.id;
+                    modal = 'g';
+                    render();
+                    break;
                 }
-                modal = null;
-                await save();
-                render();
-                break;
-            }
-        case 'open-gig':
-            gid = id;
-            view = 'gig';
-            render();
-            break;
-        case 'del-g':
-            if (!confirm('Delete this gig? This cannot be undone.'))
-                break;
-            G = G.filter(g => g.id !== id);
-            if (gid === id) {
-                view = 'gigs';
-                gid = null;
-            }
-            await save();
-            render();
-            break;
-        case 'dup-gig':
-            {
-                const src = cg();
-                if (!src)
+            case 'save-g':
+                {
+                    const n=document.getElementById('gf-name')?.value.trim();
+                    if (!n)
+                        break;
+                    const ng = {
+                        name: n,
+                        date: document.getElementById('gf-date')?.value || '',
+                        client: document.getElementById('gf-client')?.value || '',
+                        notes: document.getElementById('gf-notes')?.value || ''
+                    };
+                    if (gEid)
+                        G = G.map(g => g.id === gEid ? {
+                            ...g,
+                            ...ng
+                        } : g);
+                    else {
+                        const newg = {
+                            id: uid(),
+                            ...ng,
+                            routineIds: [],
+                            createdFrom: null
+                        };
+                        G = [...G, newg];
+                        gid = newg.id;
+                        view = 'gig';
+                    }
+                    modal = null;
+                    await save();
+                    render();
                     break;
-                dFr = src.id;
-                dN = src.name + ' — Copy';
-                modal = 'dup';
-                render();
-                break;
-            }
-        case 'dup-gig2':
-            {
-                const src = G.find(g => g.id === id);
-                if (!src)
-                    break;
-                dFr = id;
-                dN = src.name + ' — Copy';
-                modal = 'dup';
-                render();
-                break;
-            }
-        case 'save-dup':
-            {
-                const n=document.getElementById('dup-name')?.value.trim();
-                if (!n)
-                    break;
-                const src = G.find(g => g.id === dFr);
-                if (!src)
-                    break;
-                const ng = {
-                    ...src,
-                    id: uid(),
-                    name: n,
-                    date: '',
-                    createdFrom: src.id
-                };
-                G = [...G, ng];
-                gid = ng.id;
+                }
+            case 'open-gig':
+                gid = id;
                 view = 'gig';
+                render();
+                break;
+            case 'del-g':
+                if (!confirm('Delete this gig? This cannot be undone.'))
+                    break;
+                G = G.filter(g => g.id !== id);
+                if (gid === id) {
+                    view = 'gigs';
+                    gid = null;
+                }
+                await save();
+                render();
+                break;
+            case 'dup-gig':
+                {
+                    const src = cg();
+                    if (!src)
+                        break;
+                    dFr = src.id;
+                    dN = src.name + ' — Copy';
+                    modal = 'dup';
+                    render();
+                    break;
+                }
+            case 'dup-gig2':
+                {
+                    const src = G.find(g => g.id === id);
+                    if (!src)
+                        break;
+                    dFr = id;
+                    dN = src.name + ' — Copy';
+                    modal = 'dup';
+                    render();
+                    break;
+                }
+            case 'save-dup':
+                {
+                    const n=document.getElementById('dup-name')?.value.trim();
+                    if (!n)
+                        break;
+                    const src = G.find(g => g.id === dFr);
+                    if (!src)
+                        break;
+                    const ng = {
+                        ...src,
+                        id: uid(),
+                        name: n,
+                        date: '',
+                        createdFrom: src.id
+                    };
+                    G = [...G, ng];
+                    gid = ng.id;
+                    view = 'gig';
+                    modal = null;
+                    await save();
+                    render();
+                    break;
+                }
+            case 'open-picker':
+                pCx = [];
+                pQ = '';
+                modal = 'picker';
+                render();
+                break;
+            case 'pk-cx':
+                pCx = pCx.includes(v) ? pCx.filter(x => x !== v) : [...pCx, v];
+                rModal();
+                break;
+            case 'add-to-gig':
+                {
+                    const g = cg();
+                    if (!g || g.routineIds.includes(id))
+                        break;
+                    G = G.map(g => g.id === gid ? {
+                        ...g,
+                        routineIds: [...g.routineIds, id]
+                    } : g);
+                    await save();
+                    rModal();
+                    break;
+                }
+            case 'rem-from-gig':
+                G = G.map(g => g.id === gid ? {
+                    ...g,
+                    routineIds: g.routineIds.filter(x => x !== id)
+                } : g);
+                await save();
+                if (modal === 'picker')
+                    rModal();
+                else
+                    render();
+                break;
+            case 'mv-up':
+                {
+                    const g = cg();
+                    if (!g)
+                        break;
+                    const ids = [...g.routineIds],
+                        i = ids.indexOf(id);
+                    if (i <= 0)
+                        break;
+                    [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]];
+                    G = G.map(g => g.id === gid ? {
+                        ...g,
+                        routineIds: ids
+                    } : g);
+                    await save();
+                    render();
+                    break;
+                }
+            case 'mv-dn':
+                {
+                    const g = cg();
+                    if (!g)
+                        break;
+                    const ids = [...g.routineIds],
+                        i = ids.indexOf(id);
+                    if (i >= ids.length - 1)
+                        break;
+                    [ids[i], ids[i + 1]] = [ids[i + 1], ids[i]];
+                    G = G.map(g => g.id === gid ? {
+                        ...g,
+                        routineIds: ids
+                    } : g);
+                    await save();
+                    render();
+                    break;
+                }
+            case 'close-modal':
                 modal = null;
-                await save();
                 render();
                 break;
             }
-        case 'open-picker':
-            pCx = [];
-            pQ = '';
-            modal = 'picker';
-            render();
-            break;
-        case 'pk-cx':
-            pCx = pCx.includes(v) ? pCx.filter(x => x !== v) : [...pCx, v];
-            rModal();
-            break;
-        case 'add-to-gig':
-            {
-                const g = cg();
-                if (!g || g.routineIds.includes(id))
-                    break;
-                G = G.map(g => g.id === gid ? {
-                    ...g,
-                    routineIds: [...g.routineIds, id]
-                } : g);
-                await save();
-                rModal();
-                break;
-            }
-        case 'rem-from-gig':
-            G = G.map(g => g.id === gid ? {
-                ...g,
-                routineIds: g.routineIds.filter(x => x !== id)
-            } : g);
-            await save();
-            if (modal === 'picker')
-                rModal();
-            else
-                render();
-            break;
-        case 'mv-up':
-            {
-                const g = cg();
-                if (!g)
-                    break;
-                const ids = [...g.routineIds],
-                    i = ids.indexOf(id);
-                if (i <= 0)
-                    break;
-                [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]];
-                G = G.map(g => g.id === gid ? {
-                    ...g,
-                    routineIds: ids
-                } : g);
-                await save();
-                render();
-                break;
-            }
-        case 'mv-dn':
-            {
-                const g = cg();
-                if (!g)
-                    break;
-                const ids = [...g.routineIds],
-                    i = ids.indexOf(id);
-                if (i >= ids.length - 1)
-                    break;
-                [ids[i], ids[i + 1]] = [ids[i + 1], ids[i]];
-                G = G.map(g => g.id === gid ? {
-                    ...g,
-                    routineIds: ids
-                } : g);
-                await save();
-                render();
-                break;
-            }
-        case 'close-modal':
-            modal = null;
-            render();
-            break;
+        } catch (err) {
+            console.error('Action error [' + a + ']', err);
+            showSync('Error: ' + err.message, '#C9507A');
         }
     });
 
