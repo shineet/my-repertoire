@@ -1706,6 +1706,40 @@
         ;
     }
 
+    // Snapshot current form input values back into rF (so re-render doesn't lose typed text)
+    function snapRF() {
+        const n = document.getElementById('rf-name');
+        const d = document.getElementById('rf-dur');
+        const nt = document.getElementById('rf-notes');
+        const di = document.getElementById('rf-diff');
+        const st = document.getElementById('rf-stat');
+        if (n)
+            rF.name = n.value;
+        if (d)
+            rF.duration = d.value;
+        if (nt)
+            rF.notes = nt.value;
+        if (di)
+            rF.difficulty = di.value;
+        if (st)
+            rF.status = st.value;
+    }
+
+    // Re-render modal and restore focus to previously active input
+    function rModalFocused() {
+        const focusedId = document.activeElement?.id || null;
+        const cursorPos = document.activeElement?.selectionStart ?? null;
+        rModal();
+        if (focusedId) {
+            const el = document.getElementById(focusedId);
+            if (el) {
+                el.focus();
+                if (cursorPos !== null && el.setSelectionRange)
+                    el.setSelectionRange(cursorPos, cursorPos);
+            }
+        }
+    }
+
     // Modals
     function rModal() {
         const ov = document.getElementById('ov');
@@ -1961,13 +1995,19 @@
                 rModal();
                 break;
             case 'rf-cx':
-                rF.contexts = rF.contexts.includes(v) ? rF.contexts.filter(x => x !== v) : [...rF.contexts, v];
-                rModal();
-                break;
+                {
+                    snapRF();
+                    rF.contexts = rF.contexts.includes(v) ? rF.contexts.filter(x => x !== v) : [...rF.contexts, v];
+                    rModalFocused();
+                    break;
+                }
             case 'rf-ro':
-                rF.roles = rF.roles.includes(v) ? rF.roles.filter(x => x !== v) : [...rF.roles, v];
-                rModal();
-                break;
+                {
+                    snapRF();
+                    rF.roles = rF.roles.includes(v) ? rF.roles.filter(x => x !== v) : [...rF.roles, v];
+                    rModalFocused();
+                    break;
+                }
             case 'save-r':
                 {
                     const n=document.getElementById('rf-name')?.value.trim();
