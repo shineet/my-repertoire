@@ -1936,11 +1936,11 @@
         case 'open-add-r':
             rF = {
                 name: '',
-                duration: '',
+                duration: 5,
                 difficulty: 'Intermediate',
                 status: 'Active',
-                roles: [],
-                contexts: [],
+                roles: ['Feature'],
+                contexts: ['Stage'],
                 notes: ''
             };
             rEid = null;
@@ -1962,7 +1962,7 @@
                     break;
                 const nr = {
                     name: n,
-                    duration: +(document.getElementById('rf-dur')?.value) || 0,
+                    duration: +(document.getElementById('rf-dur')?.value) || 5,
                     difficulty:document.getElementById('rf-diff')?.value,
                     status:document.getElementById('rf-stat')?.value,
                     roles: [...rF.roles],
