@@ -1343,6 +1343,7 @@
         q = '';
     let expanded = new Set();
     let reordering = false;
+    let reorderingGig = false;
     let saveTimer = null;
     function debounceSave() {
         clearTimeout(saveTimer);
@@ -1567,7 +1568,7 @@
             btns = btn('+ New Gig', 'data-a="open-add-g"', 'go');
         else if (view === 'gig') {
             const g = cg();
-            btns = btn('← Back', 'data-a="nav-gigs"', 'gh', true) + ' ' + btn('Edit', 'data-a="edit-gig"', 'ot', true) + ' ' + btn('Duplicate', 'data-a="dup-gig"', 'ot', true) + ' ' + btn('+ Add Routines', 'data-a="open-picker"', 'go', true);
+            btns = btn('← Back', 'data-a="nav-gigs"', 'gh', true) + ' ' + btn('Edit', 'data-a="edit-gig"', 'ot', true) + ' ' + btn('Duplicate', 'data-a="dup-gig"', 'ot', true) + ' ' + btn(reorderingGig ? '✓ Done' : 'Edit Order', 'data-a="tog-reorder-gig"', reorderingGig ? 'go' : 'ot', true) + ' ' + btn('+ Add Routines', 'data-a="open-picker"', 'go', true);
         }
         return `<div style="border-bottom:1px solid #1E2140;padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:#0B0D1A;z-index:10;flex-wrap:wrap;">
     <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;white-space:nowrap;color:#C9A047;">✦ The Repertoire</div>
@@ -1709,11 +1710,10 @@
         const RCOL = 'display:grid;grid-template-columns:44px 1fr auto auto;gap:8px;align-items:center;';
         const rows = grs.map((r, i) => `<div style="border-bottom:${i < grs.length - 1 ? '1px solid #1E2140' : 'none'};">
     <div style="${RCOL}padding:10px 14px;" data-hov="1">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:28px;">
         ${
-        i > 0 ? `<button data-a="mv-up" data-id="${r.id}" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;">▲</button>` : `<span style="color:#1E2140;font-size:11px;padding:1px 4px;">▲</span>`}
-        <span style="font-size:11px;color:#555E7A;font-weight:600;">${i + 1}</span>
-        ${i < grs.length - 1 ? `<button data-a="mv-dn" data-id="${r.id}" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;">▼</button>` : `<span style="color:#1E2140;font-size:11px;padding:1px 4px;">▼</span>`}
+        reorderingGig && i > 0 ? `<button data-a="mv-up" data-id="${r.id}" style="background:none;border:none;color:#C9A047;cursor:pointer;font-size:12px;padding:1px 4px;">▲</button>` : ''}
+        ${reorderingGig && i < grs.length - 1 ? `<button data-a="mv-dn" data-id="${r.id}" style="background:none;border:none;color:#C9A047;cursor:pointer;font-size:12px;padding:1px 4px;">▼</button>` : ''}
       </div>
       <div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
@@ -1979,6 +1979,7 @@
             break;
         case 'nav-gigs':
             view = 'gigs';
+            reorderingGig = false;
             render();
             break;
         case 'open-detail':
@@ -2102,6 +2103,12 @@
         case 'tog-reorder':
             {
                 reordering = !reordering;
+                render();
+                break;
+            }
+        case 'tog-reorder-gig':
+            {
+                reorderingGig = !reorderingGig;
                 render();
                 break;
             }
