@@ -1587,7 +1587,7 @@
         });
         const dRows = fil.map((r, i) => `<div class="desk-row-wrap" style="border-bottom:${i < fil.length - 1 ? '1px solid #1E2140' : 'none'};">
     <div class="desk-row" style="${GCOL}padding:10px 16px;align-items:center;" data-hov="1">
-      <button data-a="tog-expand" data-id="${r.id}" style="background:none;border:none;color:#555E7A;font-size:13px;cursor:pointer;padding:0;line-height:1;text-align:center;width:100%;">${expanded.has(r.id) ? '▲' : '▼'}</button>
+      <button data-a="tog-expand" data-id="${r.id}" style="background:none;border:none;color:#555E7A;font-size:13px;cursor:pointer;padding:0;line-height:1;text-align:center;width:100%;">${expanded.has(r.id) ? '▼' : '▶'}</button>
       <div data-a="open-detail" data-id="${r.id}" style="font-weight:500;cursor:pointer;">${esc(r.name)}</div>
       <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}</div>
       <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
@@ -1603,7 +1603,7 @@
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
       <div data-a="open-detail" data-id="${
         r.id}" style="font-weight:600;font-size:15px;flex:1;cursor:pointer;">${esc(r.name)}</div>
-      <button data-a="tog-expand" data-id="${r.id}" style="background:none;border:none;color:#555E7A;font-size:16px;cursor:pointer;padding:0 0 0 10px;line-height:1;flex-shrink:0;">${expanded.has(r.id) ? '▲' : '▼'}</button>
+      <button data-a="tog-expand" data-id="${r.id}" style="background:none;border:none;color:#555E7A;font-size:16px;cursor:pointer;padding:0 0 0 10px;line-height:1;flex-shrink:0;">${expanded.has(r.id) ? '▼' : '▶'}</button>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${
         (r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
