@@ -1342,6 +1342,7 @@
         stF = 'Active',
         q = '';
     let expanded = new Set();
+    let reordering = false;
     let saveTimer = null;
     function debounceSave() {
         clearTimeout(saveTimer);
@@ -1553,7 +1554,7 @@
     const ta = (id, val, ph, rows) => `<textarea id="${id}" rows="${rows || 4}" placeholder="${esc(ph || '')}" style="width:100%;background:#0F1120;border:1px solid #2E3260;border-radius:8px;padding:10px 12px;color:#F0EDE6;font-size:14px;outline:none;resize:vertical;box-sizing:border-box;font-family:inherit;line-height:1.6;">${esc(val || '')}</textarea>`;
     const lb = l => `<div style="font-size:10px;color:#555E7A;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;">${l}</div>`;
     const TH = `font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;font-weight:600;`;
-    const GCOL = 'display:grid;grid-template-columns:44px 30px 2fr 1.5fr 1fr 60px 110px 90px;gap:8px;';
+    const GCOL = 'display:grid;grid-template-columns:30px 30px 2fr 1.5fr 1fr 60px 110px 90px;gap:8px;';
     const DCOL = 'display:grid;grid-template-columns:50px 2fr 1.5fr 1fr 65px 80px;gap:8px;';
 
     // Header
@@ -1561,7 +1562,7 @@
         const nav = (v, l, mv) => `<button data-a="nav-${v}" style="background:${view === mv || view === v ? '#161829' : 'transparent'};color:${view === mv || view === v ? '#C9A047' : '#555E7A'};border:1px solid ${view === mv || view === v ? '#1E2140' : 'transparent'};border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;">${l}</button>`;
         let btns = '';
         if (view === 'master')
-            btns = `<span style="font-size:12px;color:#555E7A;align-self:center;">${R.length} routines</span> ` + btn('+ Routine', 'data-a="open-add-r"', 'go');
+            btns = `<span style="font-size:12px;color:#555E7A;align-self:center;">${R.length} routines</span> ` + btn(reordering ? '✓ Done' : 'Edit Order', 'data-a="tog-reorder"', reordering ? 'go' : 'ot', true) + ' ' + btn('+ Routine', 'data-a="open-add-r"', 'go');
         else if (view === 'gigs')
             btns = btn('+ New Gig', 'data-a="open-add-g"', 'go');
         else if (view === 'gig') {
@@ -1594,9 +1595,8 @@
     <div class="desk-row" style="${GCOL}padding:10px 16px;align-items:center;" data-hov="1">
       <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
         ${
-        i > 0 ? `<button data-a="mv-r-up" data-id="${r.id}" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;">▲</button>` : `<span style="color:#1E2140;font-size:11px;padding:1px 4px;">▲</span>`}
-        <span style="font-size:10px;color:#555E7A;">${i + 1}</span>
-        ${i < fil.length - 1 ? `<button data-a="mv-r-dn" data-id="${r.id}" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;">▼</button>` : `<span style="color:#1E2140;font-size:11px;padding:1px 4px;">▼</span>`}
+        reordering && i > 0 ? `<button data-a="mv-r-up" data-id="${r.id}" style="background:none;border:none;color:#C9A047;cursor:pointer;font-size:12px;padding:1px 4px;">▲</button>` : ''}
+        ${reordering && i < fil.length - 1 ? `<button data-a="mv-r-dn" data-id="${r.id}" style="background:none;border:none;color:#C9A047;cursor:pointer;font-size:12px;padding:1px 4px;">▼</button>` : ''}
       </div>
       <button data-a="tog-expand" data-id="${
         r.id}" style="background:none;border:none;color:#555E7A;font-size:13px;cursor:pointer;padding:0;line-height:1;text-align:center;width:100%;">${expanded.has(r.id) ? '▼' : '▶'}</button>
@@ -1645,7 +1645,7 @@
     <div class="desk-table" style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">
       <div class="desk-row" style="${
 
-        GCOL}background:#161829;border-bottom:1px solid #1E2140;padding:8px 16px;">${['', '', 'Routine', 'Context', 'Role', 'Time', 'Difficulty', 'Status'].map(h => `<div style="${TH}">${h}</div>`).join('')}</div>
+        GCOL}background:#161829;border-bottom:1px solid #1E2140;padding:8px 16px;">${[reordering ? '↕' : '', '', 'Routine', 'Context', 'Role', 'Time', 'Difficulty', 'Status'].map(h => `<div style="${TH}">${h}</div>`).join('')}</div>
       ${fil.length ? dRows : `<div style="padding:40px 0;text-align:center;color:#555E7A;">No routines match your filters.</div>`}
     </div>
     <div>${
@@ -2097,6 +2097,12 @@
                     ...g
                 }));
                 debounceSave();
+                break;
+            }
+        case 'tog-reorder':
+            {
+                reordering = !reordering;
+                render();
                 break;
             }
         case 'mv-r-up':
