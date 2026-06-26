@@ -1716,17 +1716,16 @@
         ${reorderingGig && i < grs.length - 1 ? `<button data-a="mv-dn" data-id="${r.id}" style="background:none;border:none;color:#C9A047;cursor:pointer;font-size:12px;padding:1px 4px;">▼</button>` : ''}
       </div>
       <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+        <div style="display:flex;align-items:center;gap:8px;">
           <button data-a="tog-expand" data-id="${
 
 
         r.id}" style="background:none;border:none;color:#555E7A;font-size:13px;cursor:pointer;padding:0;line-height:1;">${expanded.has(r.id) ? '▼' : '▶'}</button>
           <div data-a="open-detail" data-id="${r.id}" style="font-weight:500;cursor:pointer;">${esc(r.name)}</div>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:3px;">${
-        (r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
       </div>
       <span style="font-size:12px;color:#888CAA;white-space:nowrap;">⏱ ${
+
         fmt(r.duration)}</span>
       ${btn('Remove', `data-a="rem-from-gig" data-id="${r.id}"`, `re`, true)}
     </div>
