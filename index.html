@@ -1707,10 +1707,10 @@
         if (!g)
             return '';
         const grs = gr();
-        const RCOL = 'display:grid;grid-template-columns:44px 1fr auto auto;gap:8px;align-items:center;';
+        const RCOL = 'display:grid;grid-template-columns:20px 1fr auto auto;gap:8px;align-items:center;';
         const rows = grs.map((r, i) => `<div style="border-bottom:${i < grs.length - 1 ? '1px solid #1E2140' : 'none'};">
     <div style="${RCOL}padding:10px 14px;" data-hov="1">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:28px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:16px;">
         ${
         reorderingGig && i > 0 ? `<button data-a="mv-up" data-id="${r.id}" style="background:none;border:none;color:#C9A047;cursor:pointer;font-size:12px;padding:1px 4px;">▲</button>` : ''}
         ${reorderingGig && i < grs.length - 1 ? `<button data-a="mv-dn" data-id="${r.id}" style="background:none;border:none;color:#C9A047;cursor:pointer;font-size:12px;padding:1px 4px;">▼</button>` : ''}
