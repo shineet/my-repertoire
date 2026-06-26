@@ -1548,7 +1548,7 @@
     const ta = (id, val, ph, rows) => `<textarea id="${id}" rows="${rows || 4}" placeholder="${esc(ph || '')}" style="width:100%;background:#0F1120;border:1px solid #2E3260;border-radius:8px;padding:10px 12px;color:#F0EDE6;font-size:14px;outline:none;resize:vertical;box-sizing:border-box;font-family:inherit;line-height:1.6;">${esc(val || '')}</textarea>`;
     const lb = l => `<div style="font-size:10px;color:#555E7A;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;">${l}</div>`;
     const TH = `font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;font-weight:600;`;
-    const GCOL = 'display:grid;grid-template-columns:2fr 1.5fr 1fr 60px 110px 90px;gap:8px;';
+    const GCOL = 'display:grid;grid-template-columns:30px 2fr 1.5fr 1fr 60px 110px 90px;gap:8px;';
     const DCOL = 'display:grid;grid-template-columns:50px 2fr 1.5fr 1fr 65px 80px;gap:8px;';
 
     // Header
@@ -1585,13 +1585,18 @@
                 return false;
             return true;
         });
-        const dRows = fil.map((r, i) => `<div data-a="open-detail" data-id="${r.id}" class="desk-row" style="${GCOL}padding:10px 16px;align-items:center;border-bottom:${i < fil.length - 1 ? '1px solid #1E2140' : 'none'};" data-hov="1">
-    <div style="font-weight:500;">${esc(r.name)}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
-    <div style="font-size:13px;color:#888CAA;">${fmt(r.duration)}</div>
-    <div style="font-size:12px;color:#555E7A;">${esc(r.difficulty)}</div>
-    <div>${bdg(r.status, SC[r.status] || '#888CAA', true)}</div>
+        const dRows = fil.map((r, i) => `<div class="desk-row-wrap" style="border-bottom:${i < fil.length - 1 ? '1px solid #1E2140' : 'none'};">
+    <div class="desk-row" style="${GCOL}padding:10px 16px;align-items:center;" data-hov="1">
+      <button data-a="tog-expand" data-id="${r.id}" style="background:none;border:none;color:#555E7A;font-size:13px;cursor:pointer;padding:0;line-height:1;text-align:center;width:100%;">${expanded.has(r.id) ? '▲' : '▼'}</button>
+      <div data-a="open-detail" data-id="${r.id}" style="font-weight:500;cursor:pointer;">${esc(r.name)}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
+      <div style="font-size:13px;color:#888CAA;">${fmt(r.duration)}</div>
+      <div style="font-size:12px;color:#555E7A;">${esc(r.difficulty)}</div>
+      <div>${bdg(r.status, SC[r.status] || '#888CAA', true)}</div>
+    </div>
+    ${
+        expanded.has(r.id) && r.notes ? `<div style="padding:0 16px 14px 56px;font-size:12px;color:#888CAA;line-height:1.7;white-space:pre-wrap;background:#0F1120;border-top:1px solid #1E2140;">${esc(r.notes)}</div>` : ''}
   </div>`
         ).join('');
         const mCards = fil.map(r => `<div class="mob-card" style="background:#161829;border-radius:10px;border:1px solid #1E2140;padding:14px;margin-bottom:10px;">
@@ -1628,7 +1633,7 @@
     <div class="desk-table" style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">
       <div class="desk-row" style="${
 
-        GCOL}background:#161829;border-bottom:1px solid #1E2140;padding:8px 16px;">${['Routine (tap for full notes)', 'Context', 'Role', 'Time', 'Difficulty', 'Status'].map(h => `<div style="${TH}">${h}</div>`).join('')}</div>
+        GCOL}background:#161829;border-bottom:1px solid #1E2140;padding:8px 16px;">${['', 'Routine', 'Context', 'Role', 'Time', 'Difficulty', 'Status'].map(h => `<div style="${TH}">${h}</div>`).join('')}</div>
       ${fil.length ? dRows : `<div style="padding:40px 0;text-align:center;color:#555E7A;">No routines match your filters.</div>`}
     </div>
     <div>${
