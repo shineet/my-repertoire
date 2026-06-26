@@ -101,6 +101,10 @@
         .col-grid {
             grid-template-columns: 1fr !important
         }
+
+        .notes-exp {
+            padding-left: 14px !important
+        }
     }
     </style>
 </head>
@@ -1609,7 +1613,7 @@
       <div>${bdg(r.status, SC[r.status] || '#888CAA', true)}</div>
     </div>
     ${
-        expanded.has(r.id) && r.notes ? `<div style="padding:6px 16px 10px 98px;background:#0F1120;border-top:1px solid #1E2140;"><textarea data-a="edit-notes" data-id="${r.id}" style="width:100%;background:transparent;border:none;outline:none;color:#888CAA;font-size:12px;line-height:1.7;font-family:inherit;resize:vertical;min-height:80px;" placeholder="Add notes...">${esc(r.notes)}</textarea></div>` : ''}
+        expanded.has(r.id) && r.notes ? `<div style="padding:6px 16px 10px 98px;background:#0F1120;border-top:1px solid #1E2140;"><textarea data-a="edit-notes" data-id="${r.id}" style="width:100%;background:transparent;border:none;outline:none;color:#888CAA;font-size:12px;line-height:1.7;font-family:inherit;resize:none;overflow:hidden;" placeholder="Add notes...">${esc(r.notes)}</textarea></div>` : ''}
   </div>`
         ).join('');
         const mCards = fil.map(r => `<div class="mob-card" style="background:#161829;border-radius:10px;border:1px solid #1E2140;padding:14px;margin-bottom:10px;">
@@ -1730,7 +1734,7 @@
       ${btn('Remove', `data-a="rem-from-gig" data-id="${r.id}"`, `re`, true)}
     </div>
     ${
-        expanded.has(r.id) && r.notes ? `<div style="padding:6px 14px 10px 58px;background:#0F1120;border-top:1px solid #1E2140;"><textarea data-a="edit-notes" data-id="${r.id}" style="width:100%;background:transparent;border:none;outline:none;color:#888CAA;font-size:12px;line-height:1.7;font-family:inherit;resize:vertical;min-height:80px;" placeholder="Add notes...">${esc(r.notes)}</textarea></div>` : ''}
+        expanded.has(r.id) && r.notes ? `<div class="notes-exp" style="padding:6px 14px 10px 58px;background:#0F1120;border-top:1px solid #1E2140;"><textarea data-a="edit-notes" data-id="${r.id}" style="width:100%;background:transparent;border:none;outline:none;color:#888CAA;font-size:12px;line-height:1.7;font-family:inherit;resize:none;overflow:hidden;" placeholder="Add notes...">${esc(r.notes)}</textarea></div>` : ''}
   </div>`
         ).join('');
 
@@ -1930,6 +1934,7 @@
             main = rGigDetail();
         document.getElementById('sc').innerHTML = rHeader() + main;
         rModal();
+        autoResizeTAs();
         const s = document.getElementById('srch');
         if (s) {
             s.oninput = e => {
@@ -1951,10 +1956,19 @@
             render();
         }
     });
+    function autoResizeTAs() {
+        document.querySelectorAll('textarea[data-a="edit-notes"]').forEach(ta => {
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
+        });
+    }
+
     document.getElementById('app').addEventListener('input', function(e) {
         const ta = e.target.closest('textarea[data-a="edit-notes"]');
         if (!ta)
             return;
+        ta.style.height = 'auto';
+        ta.style.height = ta.scrollHeight + 'px';
         const id = ta.dataset.id;
         R = R.map(r => r.id === id ? {
             ...r,
