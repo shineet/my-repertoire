@@ -1694,37 +1694,35 @@
         if (!g)
             return '';
         const grs = gr();
-        const rows = grs.map((r, i) => `<div style="${DCOL}padding:10px 16px;align-items:center;border-bottom:${i < grs.length - 1 ? '1px solid #1E2140' : 'none'};" data-hov="1">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:1px;">
-      ${
-        i > 0 ? `<button data-a="mv-up" data-id="${r.id}" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:12px;padding:2px;">▲</button>` : `<span style="color:#1E2140;font-size:12px;padding:2px;">▲</span>`}
-      <span style="font-size:11px;color:#555E7A;font-weight:600;">${i + 1}</span>
-      ${i < grs.length - 1 ? `<button data-a="mv-dn" data-id="${r.id}" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:12px;padding:2px;">▼</button>` : `<span style="color:#1E2140;font-size:12px;padding:2px;">▼</span>`}
-    </div>
-    <div data-a="open-detail" data-id="${
-        r.id}" style="cursor:pointer;font-weight:500;">${esc(r.name)}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:3px;">${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
-    <div style="font-size:13px;color:#888CAA;">${fmt(r.duration)}</div>
-    ${btn('Remove', `data-a="rem-from-gig" data-id="${r.id}"`, `re`, true)}
-  </div>`
-        ).join('');
-        const mRows = grs.map((r, i) => `<div style="background:#161829;border-radius:8px;border:1px solid #1E2140;padding:12px;margin-bottom:8px;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:14px;color:#555E7A;font-weight:700;min-width:26px;text-align:center;">${
-        i + 1}</span>
-      <div style="flex:1;">
-        <div data-a="open-detail" data-id="${
-        r.id}" style="font-weight:500;cursor:pointer;margin-bottom:4px;">${esc(r.name)}</div>
-        <div style="display:flex;gap:3px;flex-wrap:wrap;">${(r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
+        const RCOL = 'display:grid;grid-template-columns:44px 1fr auto auto;gap:8px;align-items:center;';
+        const rows = grs.map((r, i) => `<div style="border-bottom:${i < grs.length - 1 ? '1px solid #1E2140' : 'none'};">
+    <div style="${RCOL}padding:10px 14px;" data-hov="1">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        ${
+        i > 0 ? `<button data-a="mv-up" data-id="${r.id}" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;">▲</button>` : `<span style="color:#1E2140;font-size:11px;padding:1px 4px;">▲</span>`}
+        <span style="font-size:11px;color:#555E7A;font-weight:600;">${i + 1}</span>
+        ${i < grs.length - 1 ? `<button data-a="mv-dn" data-id="${r.id}" style="background:none;border:none;color:#555E7A;cursor:pointer;font-size:11px;padding:1px 4px;">▼</button>` : `<span style="color:#1E2140;font-size:11px;padding:1px 4px;">▼</span>`}
       </div>
-      <span style="font-size:12px;color:#888CAA;">${
-        fmt(r.duration)}</span>
-      ${btn('✕', `data-a="rem-from-gig" data-id="${r.id}"`, `re`, true)}
-    </div>
-  </div>`
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+          <button data-a="tog-expand" data-id="${
 
+
+        r.id}" style="background:none;border:none;color:#555E7A;font-size:13px;cursor:pointer;padding:0;line-height:1;">${expanded.has(r.id) ? '▼' : '▶'}</button>
+          <div data-a="open-detail" data-id="${r.id}" style="font-weight:500;cursor:pointer;">${esc(r.name)}</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;">${
+        (r.contexts || []).map(c => bdg(c, CC[c], true)).join('')}${(r.roles || []).map(rl => bdg(rl, RC[rl], true)).join('')}</div>
+      </div>
+      <span style="font-size:12px;color:#888CAA;white-space:nowrap;">⏱ ${
+        fmt(r.duration)}</span>
+      ${btn('Remove', `data-a="rem-from-gig" data-id="${r.id}"`, `re`, true)}
+    </div>
+    ${
+        expanded.has(r.id) && r.notes ? `<div style="padding:0 14px 12px 58px;font-size:12px;color:#888CAA;line-height:1.7;white-space:pre-wrap;background:#0F1120;border-top:1px solid #1E2140;">${esc(r.notes)}</div>` : ''}
+  </div>`
         ).join('');
+
         return `<div style="padding:16px 20px;">
     <div style="margin-bottom:18px;">
       <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px;">${
@@ -1733,58 +1731,28 @@
       ${g.notes ? `<div style="font-size:13px;color:#888CAA;margin-top:5px;">${esc(g.notes)}</div>` : ''}
     </div>
     ${
-        !grs.length ? `<div style="text-align:center;padding:50px 0;color:#555E7A;"><div style="margin-bottom:16px;">No routines in this setlist yet.</div>${btn('+ Add from Master List', 'data-a="open-picker"', 'go')}</div>` : `<div>
-      <div class="desk-table" style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">
-        <div class="desk-row" style="${
-        DCOL}background:#161829;border-bottom:1px solid #1E2140;padding:8px 16px;">${['#', 'Routine', 'Context', 'Role', 'Time', ''].map(h => `<div style="${TH}">${h}</div>`).join('')}</div>
-        ${rows}
-        <div style="background:#161829;border-top:1px solid #1E2140;padding:10px 16px;display:flex;justify-content:flex-end;gap:20px;">
+        !grs.length ? `<div style="text-align:center;padding:50px 0;color:#555E7A;"><div style="margin-bottom:16px;">No routines in this setlist yet.</div>${btn('+ Add from Master List', 'data-a="open-picker"', 'go')}</div>` : `<div style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">
+        <div style="${RCOL}background:#161829;border-bottom:1px solid #1E2140;padding:8px 14px;">
+          <div style="${TH}">#</div>
+          <div style="${TH}">Routine</div>
+          <div style="${TH}">Time</div>
+          <div></div>
+        </div>
+        ${
+
+        rows}
+        <div style="background:#161829;border-top:1px solid #1E2140;padding:10px 14px;display:flex;justify-content:flex-end;gap:20px;">
           <span style="font-size:12px;color:#555E7A;">${
-        grs.length} routines in set</span>
+        grs.length} routines</span>
           <span style="font-size:13px;color:#C9A047;font-weight:700;">Total: ${fmt(tot(grs))}</span>
         </div>
-      </div>
-      <div class="mob-card" style="display:block;">${
+      </div>`
 
-        mRows}<div style="text-align:right;padding:8px 4px;font-size:13px;color:#C9A047;font-weight:700;">Total: ${fmt(tot(grs))} · ${grs.length} routines</div></div>
-    </div>`
         }
   </div>`
         ;
     }
 
-    // Snapshot current form inputs back into rF so re-render doesn't lose typed text
-    function snapRF() {
-        const n = document.getElementById('rf-name');
-        const d = document.getElementById('rf-dur');
-        const nt = document.getElementById('rf-notes');
-        const di = document.getElementById('rf-diff');
-        const st = document.getElementById('rf-stat');
-        if (n)
-            rF.name = n.value;
-        if (d)
-            rF.duration = d.value;
-        if (nt)
-            rF.notes = nt.value;
-        if (di)
-            rF.difficulty = di.value;
-        if (st)
-            rF.status = st.value;
-    }
-    function rModalFocused() {
-        const focusedId = document.activeElement?.id || null;
-        const cursorPos = document.activeElement?.selectionStart ?? null;
-        rModal();
-        if (focusedId) {
-            const el = document.getElementById(focusedId);
-            if (el) {
-                el.focus();
-                if (cursorPos !== null && el.setSelectionRange)
-                    el.setSelectionRange(cursorPos, cursorPos);
-            }
-        }
-    }
-    // Modals
     function rModal() {
         const ov = document.getElementById('ov');
         if (!modal) {
