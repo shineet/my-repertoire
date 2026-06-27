@@ -1870,15 +1870,6 @@
         }
         else if (modal === 'picker') {
             const g = cg();
-            const pl = R.filter(r => {
-                if (pCx.length && !pCx.some(c => (r.contexts || []).includes(c)))
-                    return false;
-                if (pQ && !r.name.toLowerCase().includes(pQ.toLowerCase()))
-                    return false;
-                return true;
-            });
-            const inSet = pl.filter(r => inG(r.id));
-            const notIn = pl.filter(r => !inG(r.id));
             const rRow = (r) => `<div style="display:flex;align-items:center;padding:10px 14px;gap:10px;background:${inG(r.id) ? '#C9A04710' : 'transparent'};">
       <div style="flex:1;">
         <div style="font-weight:500;font-size:13px;">${
@@ -1889,6 +1880,23 @@
             inG(r.id) ? 'rem-from-gig' : 'add-to-gig'}" data-id="${r.id}" style="background:${inG(r.id) ? '#C9507A22' : ' #C9A04722'};color:${inG(r.id) ? '#C9507A' : '#C9A047'};border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">${inG(r.id) ? '✓ In Set' : '+ Add'}</button>
     </div>`
             ;
+            // Build only the results-list inner HTML. On each keystroke we re-render
+            // just this (not the whole modal), so the search input element is never
+            // destroyed -- focus and caret are preserved. Fixes the recurring
+            // "can only type one letter" search bug.
+            const pkListHTML = () => {
+                const pl = R.filter(r => {
+                    if (pCx.length && !pCx.some(c => (r.contexts || []).includes(c)))
+                        return false;
+                    if (pQ && !r.name.toLowerCase().includes(pQ.toLowerCase()))
+                        return false;
+                    return true;
+                });
+                const inSet = pl.filter(r => inG(r.id));
+                const notIn = pl.filter(r => !inG(r.id));
+                return `${inSet.length ? `<div style="font-size:10px;color:#C9A047;text-transform:uppercase;letter-spacing:.1em;padding:8px 14px 4px;background:#161829;">In Setlist (${inSet.length})</div>${inSet.map(rRow).join('<div style="height:1px;background:#1E2140;"></div>')}
+        <div style="height:1px;background:#2E3260;"></div>` : ''}${notIn.length ? `<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;padding:8px 14px 4px;background:#161829;">All Routines (${notIn.length})</div>${notIn.map(rRow).join('<div style="height:1px;background:#1E2140;"></div>')}` : `<div style="padding:28px 0;text-align:center;color:#555E7A;">No routines match.</div>`}`;
+            };
             ov.innerHTML = `<div style="${bx(620)}" class="modal-box" id="mb">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div style="font-family:'Playfair Display',serif;font-size:19px;font-weight:700;">Add Routines</div>
@@ -1899,11 +1907,8 @@
       <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">${
             CTX.map(c => chip(c, CC[c], pCx.includes(c), `data-a="pk-cx" data-v="${esc(c)}"`)).join('')}</div>
       <input id="pk-q" value="${esc(pQ)}" placeholder="Search ${R.length} routines…" style="width:100%;background:#0F1120;border:1px solid #1E2140;border-radius:8px;padding:8px 12px;color:#F0EDE6;font-size:13px;outline:none;margin-bottom:10px;box-sizing:border-box;font-family:inherit;">
-      <div style="max-height:360px;overflow-y:auto;border-radius:8px;border:1px solid #1E2140;display:flex;flex-direction:column;gap:0;">
-        ${
-            inSet.length ? `<div style="font-size:10px;color:#C9A047;text-transform:uppercase;letter-spacing:.1em;padding:8px 14px 4px;background:#161829;">In Setlist (${inSet.length})</div>${inSet.map(rRow).join('<div style="height:1px;background:#1E2140;"></div>')}
-        <div style="height:1px;background:#2E3260;"></div>` : ''}
-        ${notIn.length ? `<div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;padding:8px 14px 4px;background:#161829;">All Routines (${notIn.length})</div>${notIn.map(rRow).join('<div style="height:1px;background:#1E2140;"></div>')}` : `<div style="padding:28px 0;text-align:center;color:#555E7A;">No routines match.</div>`}
+      <div id="pk-list" style="max-height:360px;overflow-y:auto;border-radius:8px;border:1px solid #1E2140;display:flex;flex-direction:column;gap:0;">
+        ${pkListHTML()}
       </div>
       ${
             ma(btn('Done ✓', 'data-a="close-modal"', 'go'))}
@@ -1913,9 +1918,13 @@
                 const pk = document.getElementById('pk-q');
                 if (pk) {
                     pk.focus();
+                    const end = pk.value.length;
+                    pk.setSelectionRange(end, end);
                     pk.oninput = e => {
                         pQ = e.target.value;
-                        rModal();
+                        const lst = document.getElementById('pk-list');
+                        if (lst)
+                            lst.innerHTML = pkListHTML();
                     };
                 }
             }, 50);
