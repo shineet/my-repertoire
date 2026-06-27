@@ -1690,8 +1690,8 @@
       ${g.notes && !isT(g) ? `<div style="font-size:11px;color:#555E7A;margin-bottom:10px;">${esc(g.notes)}</div>` : ''}
       <div style="display:flex;gap:5px;">
         ${
-            btn('Open', `data-a="open-gig" data-id="${g.id}"`, `gh`, true)}
-        ${btn(isT(g) ? 'Use as Show' : 'Duplicate', `data-a="dup-gig2" data-id="${g.id}"`, `go`, true)}
+            btn('Open', `data-a="open-gig" data-id="${g.id}"`, `go`, true)}
+        ${btn(isT(g) ? 'Use as Show' : 'Duplicate', `data-a="dup-gig2" data-id="${g.id}"`, `gh`, true)}
         ${btn('✕', `data-a="del-g" data-id="${g.id}"`, `re`, true)}
       </div>
     </div>`
