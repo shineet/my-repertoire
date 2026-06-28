@@ -1768,6 +1768,22 @@
         ;
     }
 
+    // Snapshot the in-progress Routine form fields (Name/Duration/Difficulty/Status/Notes)
+    // from the DOM into rF, so re-rendering the edit modal (e.g. after toggling a Context/Role
+    // pill) doesn't wipe values the user typed but hasn't saved yet.
+    function snapRF() {
+        const n = document.getElementById('rf-name');    if (n)  rF.name = n.value;
+        const d = document.getElementById('rf-dur');     if (d)  rF.duration = d.value;
+        const df = document.getElementById('rf-diff');   if (df) rF.difficulty = df.value;
+        const st = document.getElementById('rf-stat');   if (st) rF.status = st.value;
+        const nt = document.getElementById('rf-notes');  if (nt) rF.notes = nt.value;
+    }
+
+    // Re-render the Routine edit modal. Separated so pill toggles can re-render after snapRF().
+    function rModalFocused() {
+        rModal();
+    }
+
     function rModal() {
         const ov = document.getElementById('ov');
         if (!modal) {
