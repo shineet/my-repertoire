@@ -1396,7 +1396,8 @@
         R.forEach(r => (r.props || []).forEach(p => { const k = p.toLowerCase(); if (!s.has(k)) s.set(k, p); }));
         return [...s.values()].sort((a, b) => a.localeCompare(b));
     };
-    // Deduped prop list for the current gig, each with the routines that need it.
+    // Deduped prop list for the current gig, in setlist order (each prop at its
+    // first appearance), each with the routines that need it.
     const gigProps = () => {
         const m = {};
         gr().forEach(r => (r.props || []).forEach(p => {
@@ -1404,7 +1405,7 @@
             if (!m[k]) m[k] = { label: p, routines: [] };
             m[k].routines.push(r.name);
         }));
-        return Object.values(m).sort((a, b) => a.label.localeCompare(b.label));
+        return Object.values(m);
     };
 
     // Firebase
