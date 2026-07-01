@@ -1474,7 +1474,10 @@
             const data = await fbGet('/');
             if (data && data.routines) {
                 const raw = Object.values(data.routines).filter(r => r && r.id && r.name);
-                if (raw.some(r => !Array.isArray(r.props))) needsMigrationSave = true;
+                // Only worth persisting when a routine has real props in its notes but
+                // none stored yet. Empty props don't persist in Firebase anyway, so
+                // checking "no props field" alone would re-save every load pointlessly.
+                if (raw.some(r => !Array.isArray(r.props) && parsePropsFromNotes(r.notes).length)) needsMigrationSave = true;
                 R = raw.map(normR);
             } else {
                 R = [...MY];
@@ -1483,9 +1486,7 @@
                     [r.id]: r
                 }), {}));
             }
-            const rawG = data && data.gigs ? Object.values(data.gigs).filter(g => g && g.id && g.name) : [];
-            if (rawG.some(g => !g.packed || typeof g.packed !== 'object')) needsMigrationSave = true;
-            G = rawG.map(normG);
+            G = (data && data.gigs ? Object.values(data.gigs).filter(g => g && g.id && g.name) : []).map(normG);
             showSync('✓ Loaded');
         } catch (e) {
             R = [...MY];
