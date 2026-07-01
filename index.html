@@ -1514,8 +1514,22 @@
         }
     }
 
+    // Order- and property-order-insensitive serializer so a cloud copy that is
+    // semantically identical (just reshuffled by Firebase) doesn't read as "changed".
+    function stableStr(x) {
+        if (Array.isArray(x))
+            return '[' + x.map(stableStr).join(',') + ']';
+        if (x && typeof x === 'object')
+            return '{' + Object.keys(x).sort().map(k => JSON.stringify(k) + ':' + stableStr(x[k])).join(',') + '}';
+        return JSON.stringify(x);
+    }
+
     async function sync() {
         if (Date.now() - lastSave < 15000)
+            return;
+        // Don't clobber an in-progress edit: skip this cycle while a field is focused.
+        const ae = document.activeElement;
+        if (ae && ae.matches && ae.matches('textarea, input, [contenteditable="true"]'))
             return;
         try {
             const data = await fbGet('/');
@@ -1523,13 +1537,9 @@
                 return;
             const newR = data.routines ? Object.values(data.routines) : null;
             const newG = data.gigs ? Object.values(data.gigs) : null;
-            const ch = JSON.stringify({
-                r: newR,
-                g: newG
-            }) !== JSON.stringify({
-                r: R,
-                g: G
-            });
+            const toMap = arr => (arr || []).reduce((a, x) => (a[x.id] = x, a), {});
+            const ch = (newR && stableStr(toMap(newR)) !== stableStr(toMap(R))) ||
+                       (newG && stableStr(toMap(newG)) !== stableStr(toMap(G)));
             if (ch) {
                 if (newR)
                     R = newR;
