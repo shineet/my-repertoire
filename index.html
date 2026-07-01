@@ -1466,11 +1466,16 @@
     });
 
     async function load() {
+        // True if storage was missing props/packed and we derived them, so we can
+        // persist once and stop re-deriving (which the sync could otherwise clobber).
+        let needsMigrationSave = false;
         try {
             showSync('Loading…', '#2E3260');
             const data = await fbGet('/');
             if (data && data.routines) {
-                R = Object.values(data.routines).filter(r => r && r.id && r.name).map(normR);
+                const raw = Object.values(data.routines).filter(r => r && r.id && r.name);
+                if (raw.some(r => !Array.isArray(r.props))) needsMigrationSave = true;
+                R = raw.map(normR);
             } else {
                 R = [...MY];
                 await fbPut('/routines', MY.reduce((a, r) => ({
@@ -1478,12 +1483,18 @@
                     [r.id]: r
                 }), {}));
             }
-            G = data && data.gigs ? Object.values(data.gigs).filter(g => g && g.id && g.name).map(normG) : [];
+            const rawG = data && data.gigs ? Object.values(data.gigs).filter(g => g && g.id && g.name) : [];
+            if (rawG.some(g => !g.packed || typeof g.packed !== 'object')) needsMigrationSave = true;
+            G = rawG.map(normG);
             showSync('✓ Loaded');
         } catch (e) {
             R = [...MY];
             G = [];
             showSync('Offline — using local data', '#C9507A');
+        }
+        // Persist the one-time props/packed migration so it becomes real stored data.
+        if (needsMigrationSave) {
+            try { await save(); } catch (e) {}
         }
         // Check URL params from booking app: ?date=2026-07-01&name=Jennifer
         try {
