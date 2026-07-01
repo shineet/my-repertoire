@@ -1378,6 +1378,10 @@
         pCx = [],
         pQ = '';
     let lastSave = 0;
+    // Global set of prop names (lowercased) that are electronic devices needing a
+    // charge. It's a property of the device, not the routine, so it lives at the root.
+    let CHARGE = {};
+    const needsCharge = label => !!CHARGE[String(label || '').toLowerCase()];
 
     // Helpers
     const uid = () => Math.random().toString(36).slice(2, 10);
@@ -1488,6 +1492,7 @@
                 }), {}));
             }
             G = (data && data.gigs ? Object.values(data.gigs).filter(g => g && g.id && g.name) : []).map(normG);
+            CHARGE = (data && data.chargeables && typeof data.chargeables === 'object' && !Array.isArray(data.chargeables)) ? data.chargeables : {};
             showSync('✓ Loaded');
         } catch (e) {
             R = [...MY];
@@ -1553,7 +1558,8 @@
             }), {});
             await fbPut('/', {
                 routines: ro,
-                gigs: go
+                gigs: go,
+                chargeables: CHARGE
             });
             showSync('✓ Synced across devices');
         } catch (e) {
@@ -1584,14 +1590,17 @@
                 return;
             const newR = data.routines ? Object.values(data.routines).filter(r => r && r.id && r.name).map(normR) : null;
             const newG = data.gigs ? Object.values(data.gigs).filter(g => g && g.id && g.name).map(normG) : null;
+            const newC = (data.chargeables && typeof data.chargeables === 'object' && !Array.isArray(data.chargeables)) ? data.chargeables : {};
             const toMap = arr => (arr || []).reduce((a, x) => (a[x.id] = x, a), {});
             const ch = (newR && stableStr(toMap(newR)) !== stableStr(toMap(R))) ||
-                       (newG && stableStr(toMap(newG)) !== stableStr(toMap(G)));
+                       (newG && stableStr(toMap(newG)) !== stableStr(toMap(G))) ||
+                       stableStr(newC) !== stableStr(CHARGE);
             if (ch) {
                 if (newR)
                     R = newR;
                 if (newG)
                     G = newG;
+                CHARGE = newC;
                 render();
                 showSync('↓ Updated from another device', '#4E9C81');
             }
@@ -1798,18 +1807,24 @@
         const props = gigProps();
         const packed = g.packed || {};
         const packedCount = props.filter(p => packed[p.label.toLowerCase()]).length;
+        const chargeList = props.filter(p => needsCharge(p.label));
         const propsPanel = !grs.length ? '' : `<div style="margin-top:22px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
         <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;">🎒 Props for this gig${props.length ? ` <span style="color:#555E7A;font-size:12px;font-weight:400;">${packedCount}/${props.length} packed</span>` : ''}</div>
         <div style="display:flex;gap:5px;">${props.length ? btn('Copy list', 'data-a="copy-props"', 'ot', true) : ''}${packedCount ? btn('Reset', 'data-a="reset-packed"', 'gh', true) : ''}</div>
       </div>
-      ${props.length ? `<div style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">${props.map((p, i) => { const on = !!packed[p.label.toLowerCase()]; return `<div data-a="tog-packed" data-v="${esc(p.label)}" style="display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:${i < props.length - 1 ? '1px solid #1E2140' : 'none'};background:${on ? '#4E9C8112' : 'transparent'};cursor:pointer;">
+      ${chargeList.length ? `<div style="background:#C9A04714;border:1px solid #C9A04744;border-radius:10px;padding:11px 14px;margin-bottom:10px;">
+        <div style="font-size:11px;color:#C9A047;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px;">🔋 Charge the night before (${chargeList.length})</div>
+        <div style="font-size:13px;color:#F0EDE6;">${chargeList.map(p => esc(p.label)).join(' · ')}</div>
+      </div>` : ''}
+      ${props.length ? `<div style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">${props.map((p, i) => { const on = !!packed[p.label.toLowerCase()]; const ch = needsCharge(p.label); return `<div data-a="tog-packed" data-v="${esc(p.label)}" style="display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:${i < props.length - 1 ? '1px solid #1E2140' : 'none'};background:${on ? '#4E9C8112' : 'transparent'};cursor:pointer;">
         <div style="width:19px;height:19px;border-radius:5px;border:1.5px solid ${on ? '#4E9C81' : '#2E3260'};background:${on ? '#4E9C81' : 'transparent'};color:#0B0D1A;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">${on ? '✓' : ''}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:500;color:${on ? '#555E7A' : '#F0EDE6'};text-decoration:${on ? 'line-through' : 'none'};">${esc(p.label)}</div>
+          <div style="font-size:13px;font-weight:500;color:${on ? '#555E7A' : '#F0EDE6'};text-decoration:${on ? 'line-through' : 'none'};">${ch ? '🔋 ' : ''}${esc(p.label)}</div>
           <div style="font-size:11px;color:#555E7A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.routines.join(', '))}</div>
         </div>
-      </div>`; }).join('')}</div>` : `<div style="font-size:13px;color:#555E7A;padding:14px 16px;background:#0F1120;border-radius:10px;border:1px dashed #1E2140;">No props tagged yet. Open a routine, tap Edit Routine, and add its props — they'll gather here as your pack list.</div>`}
+        <button data-a="tog-charge" data-v="${esc(p.label)}" title="Mark as a device that needs charging" style="flex-shrink:0;background:${ch ? '#C9A04722' : 'transparent'};border:1px solid ${ch ? '#C9A04766' : '#2E3260'};color:${ch ? '#C9A047' : '#555E7A'};border-radius:7px;padding:5px 9px;font-size:13px;cursor:pointer;font-family:inherit;">⚡</button>
+      </div>`; }).join('')}</div>` : `<div style="font-size:13px;color:#555E7A;padding:14px 16px;background:#0F1120;border-radius:10px;border:1px dashed #1E2140;">No props tagged yet. Open a routine, tap Edit Routine, and add its props — they'll gather here as your pack list. Then tap the ⚡ on any device that needs charging.</div>`}
     </div>`;
 
         return `<div style="padding:16px 20px;">
@@ -2230,13 +2245,27 @@
             await save();
             render();
             break;
+        case 'tog-charge':
+            {
+                const k = v.toLowerCase();
+                CHARGE = { ...CHARGE };
+                if (CHARGE[k])
+                    delete CHARGE[k];
+                else
+                    CHARGE[k] = true;
+                await save();
+                render();
+                break;
+            }
         case 'copy-props':
             {
                 const cgg = cg();
                 const list = gigProps();
                 if (!cgg || !list.length)
                     break;
-                const text = 'Props — ' + cgg.name + '\n' + list.map(p => '☐ ' + p.label).join('\n');
+                const charge = list.filter(p => needsCharge(p.label));
+                const chargeLine = charge.length ? '\n\n🔋 Charge the night before: ' + charge.map(p => p.label).join(', ') : '';
+                const text = 'Props — ' + cgg.name + '\n' + list.map(p => '☐ ' + p.label + (needsCharge(p.label) ? ' 🔋' : '')).join('\n') + chargeLine;
                 try {
                     await navigator.clipboard.writeText(text);
                     showSync('✓ Props list copied');
