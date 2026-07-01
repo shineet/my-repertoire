@@ -1439,22 +1439,38 @@
         return m[1].split(/[,;]+/).map(s => s.trim()).filter(Boolean);
     }
 
+    // Normalize a routine/gig from storage. Used by BOTH load() and sync() so a
+    // cloud copy pulled by sync gets the same shape (incl. props migration + packed),
+    // otherwise sync would overwrite freshly-migrated props with a prop-less copy.
+    const normR = r => ({
+        id: r.id,
+        name: r.name || '',
+        duration: r.duration || 0,
+        difficulty: r.difficulty || 'Intermediate',
+        status: r.status || 'Active',
+        roles: Array.isArray(r.roles) ? r.roles : [],
+        contexts: Array.isArray(r.contexts) ? r.contexts : [],
+        notes: r.notes || '',
+        props: Array.isArray(r.props) ? r.props : parsePropsFromNotes(r.notes)
+    });
+    const normG = g => ({
+        id: g.id,
+        name: g.name || '',
+        date: g.date || '',
+        client: g.client || '',
+        notes: g.notes || '',
+        routineIds: Array.isArray(g.routineIds) ? g.routineIds : [],
+        createdFrom: g.createdFrom || null,
+        type: g.type || null,
+        packed: (g.packed && typeof g.packed === 'object' && !Array.isArray(g.packed)) ? g.packed : {}
+    });
+
     async function load() {
         try {
             showSync('Loading…', '#2E3260');
             const data = await fbGet('/');
             if (data && data.routines) {
-                R = Object.values(data.routines).filter(r => r && r.id && r.name).map(r => ({
-                    id: r.id,
-                    name: r.name || '',
-                    duration: r.duration || 0,
-                    difficulty: r.difficulty || 'Intermediate',
-                    status: r.status || 'Active',
-                    roles: Array.isArray(r.roles) ? r.roles : [],
-                    contexts: Array.isArray(r.contexts) ? r.contexts : [],
-                    notes: r.notes || '',
-                    props: Array.isArray(r.props) ? r.props : parsePropsFromNotes(r.notes)
-                }));
+                R = Object.values(data.routines).filter(r => r && r.id && r.name).map(normR);
             } else {
                 R = [...MY];
                 await fbPut('/routines', MY.reduce((a, r) => ({
@@ -1462,17 +1478,7 @@
                     [r.id]: r
                 }), {}));
             }
-            G = data && data.gigs ? Object.values(data.gigs).filter(g => g && g.id && g.name).map(g => ({
-                id: g.id,
-                name: g.name || '',
-                date: g.date || '',
-                client: g.client || '',
-                notes: g.notes || '',
-                routineIds: Array.isArray(g.routineIds) ? g.routineIds : [],
-                createdFrom: g.createdFrom || null,
-                type: g.type || null,
-                packed: (g.packed && typeof g.packed === 'object' && !Array.isArray(g.packed)) ? g.packed : {}
-            })) : [];
+            G = data && data.gigs ? Object.values(data.gigs).filter(g => g && g.id && g.name).map(normG) : [];
             showSync('✓ Loaded');
         } catch (e) {
             R = [...MY];
@@ -1563,8 +1569,8 @@
             const data = await fbGet('/');
             if (!data)
                 return;
-            const newR = data.routines ? Object.values(data.routines) : null;
-            const newG = data.gigs ? Object.values(data.gigs) : null;
+            const newR = data.routines ? Object.values(data.routines).filter(r => r && r.id && r.name).map(normR) : null;
+            const newG = data.gigs ? Object.values(data.gigs).filter(g => g && g.id && g.name).map(normG) : null;
             const toMap = arr => (arr || []).reduce((a, x) => (a[x.id] = x, a), {});
             const ch = (newR && stableStr(toMap(newR)) !== stableStr(toMap(R))) ||
                        (newG && stableStr(toMap(newG)) !== stableStr(toMap(G)));
