@@ -1364,7 +1364,6 @@
         notes: '',
         props: []
     };
-    let rFPropDraft = '';
     let rEid = null,
         gF = {
             name: '',
@@ -1394,17 +1393,11 @@
         return g ? g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean) : [];
     };
     const inG = id => !!cg()?.routineIds.includes(id);
-    // Every distinct prop used across all routines (for the "used before" suggestions).
-    const allProps = () => {
-        const s = new Map();
-        R.forEach(r => (r.props || []).forEach(p => { const k = p.toLowerCase(); if (!s.has(k)) s.set(k, p); }));
-        return [...s.values()].sort((a, b) => a.localeCompare(b));
-    };
-    // Deduped prop list for the current gig, in setlist order (each prop at its
-    // first appearance), each with the routines that need it.
+    // Deduped prop list for the current gig, parsed live from each routine's
+    // "Props:" notes line, in setlist order (each prop at its first appearance).
     const gigProps = () => {
         const m = {};
-        gr().forEach(r => (r.props || []).forEach(p => {
+        gr().forEach(r => parsePropsFromNotes(r.notes).forEach(p => {
             const k = p.toLowerCase();
             if (!m[k]) m[k] = { label: p, routines: [] };
             m[k].routines.push(r.name);
@@ -1867,24 +1860,11 @@
         const df = document.getElementById('rf-diff');   if (df) rF.difficulty = df.value;
         const st = document.getElementById('rf-stat');   if (st) rF.status = st.value;
         const nt = document.getElementById('rf-notes');  if (nt) rF.notes = nt.value;
-        const pp = document.getElementById('rf-prop-input'); if (pp) rFPropDraft = pp.value;
     }
 
     // Re-render the Routine edit modal. Separated so pill toggles can re-render after snapRF().
     function rModalFocused() {
         rModal();
-    }
-
-    // Add a prop to the routine form. v = a suggestion click; otherwise use the typed input.
-    function addProp(v) {
-        snapRF();
-        const val = String(v || '').trim() || rFPropDraft.trim();
-        if (val && !(rF.props || []).some(p => p.toLowerCase() === val.toLowerCase()))
-            rF.props = [...(rF.props || []), val];
-        if (!v)
-            rFPropDraft = '';
-        rModalFocused();
-        document.getElementById('rf-prop-input')?.focus();
     }
 
     function rModal() {
@@ -1936,9 +1916,9 @@
         </div>
       </div>
       ${
-            (r.props || []).length ? `<div style="margin-bottom:${r.notes ? '18px' : '0'};">
+            parsePropsFromNotes(r.notes).length ? `<div style="margin-bottom:${r.notes ? '18px' : '0'};">
         <div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Props</div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px;">${(r.props || []).map(p => bdg(p, '#7A6EC9')).join('')}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">${parsePropsFromNotes(r.notes).map(p => bdg(p, '#7A6EC9')).join('')}</div>
       </div>` : ''}
       ${
 
@@ -1965,15 +1945,9 @@
             lb('Status')}${sel('rf-stat', rF.status, STS)}</div>
         <div>${lb('Context (all that apply)')}<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;">${CTX.map(c => chip(c, CC[c], rF.contexts.includes(c), `data-a="rf-cx" data-v="${esc(c)}"`)).join('')}</div></div>
         <div>${lb('Role (all that apply)')}<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;">${ROLES.map(r => chip(r, RC[r], rF.roles.includes(r), `data-a="rf-ro" data-v="${esc(r)}"`)).join('')}</div></div>
-        <div>${lb('Props needed')}
-          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;margin-bottom:8px;">${(rF.props || []).length ? (rF.props || []).map(p => `<span style="display:inline-flex;align-items:center;gap:5px;background:#7A6EC922;color:#7A6EC9;border:1px solid #7A6EC966;border-radius:20px;padding:4px 6px 4px 11px;font-size:12px;font-weight:600;">${esc(p)}<button data-a="rf-prop-del" data-v="${esc(p)}" style="background:none;border:none;color:#7A6EC9;cursor:pointer;font-size:15px;line-height:1;padding:0 2px;">×</button></span>`).join('') : `<span style="color:#555E7A;font-size:12px;">None added yet</span>`}</div>
-          <div style="display:flex;gap:6px;">
-            <input id="rf-prop-input" value="${esc(rFPropDraft)}" placeholder="e.g. Marked Deck, then Enter" style="flex:1;background:#0F1120;border:1px solid #2E3260;border-radius:8px;padding:9px 12px;color:#F0EDE6;font-size:13px;outline:none;box-sizing:border-box;font-family:inherit;">
-            ${btn('Add', 'data-a="rf-prop-add"', 'gh', true)}
-          </div>
-          ${(() => { const sug = allProps().filter(p => !(rF.props || []).some(x => x.toLowerCase() === p.toLowerCase())); return sug.length ? `<div style="margin-top:8px;"><div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;">Used before</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${sug.map(p => chip('+ ' + p, '#7A6EC9', false, `data-a="rf-prop-add" data-v="${esc(p)}"`)).join('')}</div></div>` : ''; })()}
+        <div>${lb('Notes & Method')}${ta('rf-notes', rF.notes, 'Full performance notes, patter, tech setup…', 6)}
+          <div style="font-size:11px;color:#555E7A;line-height:1.5;margin-top:6px;">🎒 Props: put your gear on a line starting with <span style="color:#888CAA;">Props:</span> (e.g. <span style="color:#888CAA;">Props: Marked Deck, Sharpie</span>). Those feed the gig pack list automatically.</div>
         </div>
-        <div>${lb('Notes & Method')}${ta('rf-notes', rF.notes, 'Full performance notes, patter, tech setup…', 6)}</div>
       </div>
       ${
             ma(btn('Cancel', 'data-a="close-modal"') + btn(rEid ? 'Save Changes' : 'Add Routine', 'data-a="save-r"', 'go'))}
@@ -2118,14 +2092,6 @@
         debounceSave();
     });
 
-    // Enter in the routine props input adds the typed prop.
-    document.getElementById('app').addEventListener('keydown', function(e) {
-        if (e.target && e.target.id === 'rf-prop-input' && e.key === 'Enter') {
-            e.preventDefault();
-            addProp();
-        }
-    });
-
     // All event handling
     document.getElementById('app').addEventListener('click', async function(e) {
         const el = e.target.closest('[data-a]');
@@ -2173,10 +2139,8 @@
                     status: r.status,
                     roles: [...(r.roles || [])],
                     contexts: [...(r.contexts || [])],
-                    notes: r.notes,
-                    props: [...(r.props || [])]
+                    notes: r.notes
                 };
-                rFPropDraft = '';
                 rEid = id;
                 modal = 'r';
                 rModal();
@@ -2190,10 +2154,8 @@
                 status: 'Active',
                 roles: ['Feature'],
                 contexts: ['Stage'],
-                notes: '',
-                props: []
+                notes: ''
             };
-            rFPropDraft = '';
             rEid = null;
             modal = 'r';
             rModal();
@@ -2210,17 +2172,6 @@
                 snapRF();
                 rF.roles = rF.roles.includes(v) ? rF.roles.filter(x => x !== v) : [...rF.roles, v];
                 rModalFocused();
-                break;
-            }
-        case 'rf-prop-add':
-            addProp(v);
-            break;
-        case 'rf-prop-del':
-            {
-                snapRF();
-                rF.props = (rF.props || []).filter(p => p !== v);
-                rModalFocused();
-                document.getElementById('rf-prop-input')?.focus();
                 break;
             }
         case 'tog-packed':
@@ -2286,8 +2237,7 @@
                     status:document.getElementById('rf-stat')?.value,
                     roles: [...rF.roles],
                     contexts: [...rF.contexts],
-                    notes: document.getElementById('rf-notes')?.value || '',
-                    props: [...(rF.props || [])]
+                    notes: document.getElementById('rf-notes')?.value || ''
                 };
                 if (rEid)
                     R = R.map(r => r.id === rEid ? {
