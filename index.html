@@ -1500,29 +1500,44 @@
         if (needsMigrationSave) {
             try { await save(); } catch (e) {}
         }
-        // Check URL params from booking app: ?date=2026-07-01&name=Jennifer
+        // Check URL params from booking app: ?gig=<clientId>&date=&event=&name=&title=
         try {
             const params = new URLSearchParams(window.location.search);
+            const pGig = params.get('gig');    // booking client id — stable link
             const pDate = params.get('date');
             const pName = params.get('name');
+            const pEvent = params.get('event');
+            const pTitle = params.get('title');
             const pView = params.get('view');
-            if (pDate && G.length) {
-                // Find gig by date, optionally narrowed by name
-                let byDate = G.filter(g => g.date === pDate && !isTemplate(g));
-                let match = null;
-                if (byDate.length === 1)
-                    match = byDate[0];
-                else if (byDate.length > 1 && pName) {
+            const findByDate = () => {
+                const byDate = G.filter(g => g.date === pDate && !isTemplate(g));
+                if (byDate.length === 1) return byDate[0];
+                if (byDate.length > 1 && pName) {
                     const nl = pName.toLowerCase();
-                    match = byDate.find(g => g.name.toLowerCase().includes(nl) || (g.client || '').toLowerCase().includes(nl)) || byDate[0];
-                } else if (byDate.length > 0)
-                    match = byDate[0];
-                if (match) {
-                    gid = match.id;
-                    view = 'gig';
+                    return byDate.find(g => g.name.toLowerCase().includes(nl) || (g.client || '').toLowerCase().includes(nl)) || byDate[0];
                 }
-                else
-                    view = 'gigs';
+                return byDate.length ? byDate[0] : null;
+            };
+            if (pGig) {
+                // Came from the booking dashboard: find the linked gig, else create it.
+                let match = G.find(g => g.srcId === pGig && !isTemplate(g));
+                if (!match && pDate) match = findByDate();
+                if (!match) {
+                    // First click for this booking -> create a new gig and open it to add routines
+                    match = { id: uid(), name: (pTitle || pEvent || pName || 'New Gig'), client: pName || '', date: pDate || '', notes: '', routineIds: [], srcId: pGig };
+                    G = [match, ...G];
+                    try { await save(); } catch (e) {}
+                } else if (!match.srcId) {
+                    // Link an existing (date-matched) gig to this booking for future clicks
+                    match.srcId = pGig;
+                    try { await save(); } catch (e) {}
+                }
+                gid = match.id;
+                view = 'gig';
+            } else if (pDate && G.length) {
+                const match = findByDate();
+                if (match) { gid = match.id; view = 'gig'; }
+                else view = 'gigs';
             } else if (pView === 'gigs') {
                 view = 'gigs';
             }
