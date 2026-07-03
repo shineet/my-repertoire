@@ -1991,7 +1991,22 @@
             ;
         }
         else if (modal === 'dup') {
-            ov.innerHTML = `<div style="${bx(380)}" class="modal-box" id="mb">${mt('Duplicate Gig')}<div>${lb('New Gig Name')}${inp('dup-name', dN, 'Gig name')}</div>${ma(btn('Cancel', 'data-a="close-modal"') + btn('Duplicate & Open', 'data-a="save-dup"', 'go'))}</div>`;
+            const src = G.find(g => g.id === dFr);
+            const nR = src ? (src.routineIds || []).length : 0;
+            const targets = G.filter(g => g.id !== dFr && !isTemplate(g));
+            const tgtHtml = targets.length
+                ? targets.map(g => `<button data-a="assign-dup" data-id="${g.id}" style="display:block;width:100%;text-align:left;background:${K.ip};border:1px solid ${K.br};border-radius:8px;padding:9px 11px;margin-bottom:6px;cursor:pointer;color:${K.tx};font-family:inherit;">
+          <div style="font-weight:600;font-size:13px;">${esc(g.name)}</div>
+          <div style="font-size:11px;color:${K.dm};margin-top:2px;">${[g.client, g.date, ((g.routineIds || []).length) + ' routines'].filter(Boolean).map(esc).join(' · ')}</div>
+        </button>`).join('')
+                : `<div style="font-size:12px;color:${K.dm};padding:4px 2px;line-height:1.5;">No other gigs yet. Open a confirmed gig from the dashboard (tap <b style="color:${K.go};">🎩 Routine</b> on its card) and it will show up here to assign.</div>`;
+            ov.innerHTML = `<div style="${bx(420)}" class="modal-box" id="mb">${mt('Duplicate Gig')}
+      <div>${lb('New gig name (unassigned copy)')}${inp('dup-name', dN, 'Gig name')}</div>
+      ${ma(btn('Cancel', 'data-a="close-modal"') + btn('Duplicate & Open', 'data-a="save-dup"', 'go'))}
+      <div style="border-top:1px solid ${K.br};margin:16px 0 12px;"></div>
+      <div style="font-size:10px;color:${K.dm};letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;">Or assign these ${nR} routines to another gig</div>
+      ${tgtHtml}
+    </div>`;
         }
         else if (modal === 'picker') {
             const g = cg();
@@ -2460,6 +2475,28 @@
                 };
                 G = [...G, ng];
                 gid = ng.id;
+                view = 'gig';
+                modal = null;
+                await save();
+                render();
+                break;
+            }
+        case 'assign-dup':
+            {
+                const src = G.find(g => g.id === dFr);
+                const tgt = G.find(g => g.id === id);
+                if (!src || !tgt)
+                    break;
+                const srcIds = src.routineIds || [];
+                const cur = tgt.routineIds || [];
+                let ids = [...srcIds];
+                if (cur.length) {
+                    const replace = confirm(`"${tgt.name}" already has ${cur.length} routine(s).\n\nOK = REPLACE them with the ${srcIds.length} from "${src.name}".\nCancel = ADD these on top of the existing ones.`);
+                    if (!replace)
+                        ids = [...cur, ...srcIds.filter(x => !cur.includes(x))];
+                }
+                G = G.map(g => g.id === tgt.id ? { ...g, routineIds: ids } : g);
+                gid = tgt.id;
                 view = 'gig';
                 modal = null;
                 await save();
