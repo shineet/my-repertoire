@@ -2475,25 +2475,35 @@
                 const g = cg();
                 if (!g || g.routineIds.includes(id))
                     break;
+                const pkScroll = document.getElementById('pk-list')?.scrollTop || 0;
                 G = G.map(g => g.id === gid ? {
                     ...g,
                     routineIds: [...g.routineIds, id]
                 } : g);
                 await save();
                 rModal();
+                const pkl = document.getElementById('pk-list');
+                if (pkl)
+                    pkl.scrollTop = pkScroll;
                 break;
             }
         case 'rem-from-gig':
-            G = G.map(g => g.id === gid ? {
-                ...g,
-                routineIds: g.routineIds.filter(x => x !== id)
-            } : g);
-            await save();
-            if (modal === 'picker')
-                rModal();
-            else
-                render();
-            break;
+            {
+                const pkScroll = modal === 'picker' ? (document.getElementById('pk-list')?.scrollTop || 0) : 0;
+                G = G.map(g => g.id === gid ? {
+                    ...g,
+                    routineIds: g.routineIds.filter(x => x !== id)
+                } : g);
+                await save();
+                if (modal === 'picker') {
+                    rModal();
+                    const pkl = document.getElementById('pk-list');
+                    if (pkl)
+                        pkl.scrollTop = pkScroll;
+                } else
+                    render();
+                break;
+            }
         case 'mv-up':
             {
                 const g = cg();
