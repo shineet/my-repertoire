@@ -1749,7 +1749,13 @@
   </div>`
             ;
         const isT = isTemplate;
-        const shows = [...G].filter(g => !isT(g)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        const today = new Date().toLocaleDateString('en-CA'); // local YYYY-MM-DD
+        const allShows = [...G].filter(g => !isT(g));
+        // Upcoming (or undated) on top, soonest first; past gigs drop to the bottom, most recent first.
+        const upcoming = allShows.filter(g => !g.date || g.date >= today)
+            .sort((a, b) => (a.date || '9999-12-31').localeCompare(b.date || '9999-12-31'));
+        const past = allShows.filter(g => g.date && g.date < today)
+            .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
         const templates = G.filter(isT);
         const card = g => {
             const grs = g.routineIds.map(id => R.find(r => r.id === id)).filter(Boolean);
@@ -1781,7 +1787,7 @@
     ${items.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;">${items.map(card).join('')}</div>` : `<div style="font-size:13px;color:#555E7A;padding:16px 0;">${empty}</div>`}
   </div>`
         ;
-        return `<div style="padding:16px 20px;">${sec('Show Sets', '🎭', shows, 'No show sets yet — duplicate a template or create a new one.')}${sec('Templates', '📋', templates, 'No templates yet — create one to reuse across shows.')}</div>`;
+        return `<div style="padding:16px 20px;">${sec('Upcoming Shows', '🎭', upcoming, 'No upcoming shows — duplicate a template or open a gig from the dashboard.')}${sec('Templates', '📋', templates, 'No templates yet — create one to reuse across shows.')}${past.length ? sec('Past Gigs', '✅', past, '') : ''}</div>`;
     }
 
     function rGigDetail() {
