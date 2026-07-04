@@ -1466,6 +1466,8 @@
         type: g.type || null,
         srcId: g.srcId || null,
         importedFrom: g.importedFrom || null,
+        srcNote: g.srcNote || null,
+        srcRoutines: Array.isArray(g.srcRoutines) ? g.srcRoutines : null,
         packed: (g.packed && typeof g.packed === 'object' && !Array.isArray(g.packed)) ? g.packed : {}
     });
 
@@ -1847,6 +1849,17 @@
       </div>`; }).join('')}</div>` : `<div style="font-size:13px;color:#555E7A;padding:14px 16px;background:#0F1120;border-radius:10px;border:1px dashed #1E2140;">No props tagged yet. Open a routine, tap Edit Routine, and add its props — they'll gather here as your pack list. Then tap the ⚡ on any device that needs charging.</div>`}
     </div>`;
 
+        const notePanel = (g.srcRoutines && g.srcRoutines.length) ? `<div style="margin-top:22px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+        <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;">📝 From your note</div>
+        ${g.srcNote ? btn('Open in Notes', 'data-a="open-note"', 'ot', true) : ''}
+      </div>
+      <div style="font-size:11px;color:#555E7A;margin-bottom:9px;line-height:1.5;">Routine subheadings exactly as written in your Apple Note${g.srcNote ? ` “${esc(g.srcNote)}”` : ''}. Compare with the setlist above and fix any mismatch. (Open in Notes copies the note title so you can search it.)</div>
+      <div style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">
+        ${g.srcRoutines.map((s, i) => `<div style="padding:9px 14px;font-size:13px;color:#888CAA;border-bottom:${i < g.srcRoutines.length - 1 ? '1px solid #1E2140' : 'none'};">${esc(s)}</div>`).join('')}
+      </div>
+    </div>` : '';
+
         return `<div style="padding:16px 20px;">
     <div style="margin-bottom:18px;">
       <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px;">${
@@ -1874,6 +1887,7 @@
 
         }
     ${propsPanel}
+    ${notePanel}
   </div>`
         ;
     }
@@ -2432,6 +2446,16 @@
             view = 'gig';
             render();
             break;
+        case 'open-note':
+            {
+                const g = cg();
+                if (g && g.srcNote) {
+                    try { await navigator.clipboard.writeText(g.srcNote); } catch (e) {}
+                }
+                // No reliable per-note deep link exists; open Notes with the title on the clipboard to search.
+                window.location.href = 'notes://';
+                break;
+            }
         case 'del-g':
             if (!confirm('Delete this gig? This cannot be undone.'))
                 break;
