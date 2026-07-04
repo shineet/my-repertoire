@@ -1464,6 +1464,8 @@
         routineIds: Array.isArray(g.routineIds) ? g.routineIds : [],
         createdFrom: g.createdFrom || null,
         type: g.type || null,
+        srcId: g.srcId || null,
+        importedFrom: g.importedFrom || null,
         packed: (g.packed && typeof g.packed === 'object' && !Array.isArray(g.packed)) ? g.packed : {}
     });
 
