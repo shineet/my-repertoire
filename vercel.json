@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "press.texasmentalist.com" }],
+      "destination": "/press-kit/index.html"
+    }
+  ]
+}
