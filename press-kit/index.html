@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shine, The Mentalist — Corporate Booking Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141210;         /* near-black warm charcoal */
+    --panel:#1c1a17;
+    --cream:#f4efe6;
+    --muted:#a99f8e;
+    --gold:#c9a24a;        /* accent */
+    --gold-soft:#e3c77e;
+    --line:rgba(201,162,74,.28);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink);
+    color:var(--cream);
+    font-family:"Montserrat","Avenir Next","Avenir","Segoe UI",Helvetica,Arial,sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .serif{font-family:"Playfair Display",Georgia,"Times New Roman",serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:0 32px;}
+  .eyebrow{
+    font-size:11px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--gold);font-weight:600;
+  }
+
+  /* top ribbon */
+  .ribbon{
+    background:#000;color:var(--gold-soft);
+    text-align:center;font-size:11px;letter-spacing:.28em;
+    text-transform:uppercase;padding:9px 12px;border-bottom:1px solid var(--line);
+  }
+
+  /* hero */
+  .hero{
+    padding:72px 0 56px;
+    background:
+      radial-gradient(1200px 500px at 80% -10%, rgba(201,162,74,.16), transparent 60%),
+      linear-gradient(180deg,#100e0c,#1a1714);
+    border-bottom:1px solid var(--line);
+  }
+  .hero .wrap{display:flex;gap:40px;align-items:center;flex-wrap:wrap;}
+  .hero-photo{
+    flex:0 0 230px;height:280px;border-radius:10px;overflow:hidden;
+    background:#2a2620 center/cover no-repeat;
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--muted);font-size:12px;text-align:center;padding:16px;letter-spacing:.05em;
+  }
+  .hero-copy{flex:1;min-width:280px;}
+  h1.name{
+    font-size:clamp(40px,7vw,74px);line-height:.98;font-weight:800;
+    letter-spacing:.01em;margin:14px 0 10px;
+    background:linear-gradient(90deg,#fff,var(--gold-soft));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .tagline{font-size:clamp(17px,2.4vw,22px);color:var(--cream);opacity:.9;font-style:italic;}
+  .hero-contact{margin-top:22px;font-size:14px;color:var(--muted);}
+  .hero-contact b{color:var(--cream);font-weight:600;}
+  .hero-contact span{margin-right:18px;white-space:nowrap;}
+
+  /* stats */
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border-bottom:1px solid var(--line);background:var(--panel);
+  }
+  .stat{padding:26px 18px;text-align:center;border-right:1px solid var(--line);}
+  .stat:last-child{border-right:none;}
+  .stat .num{font-family:"Playfair Display",Georgia,serif;font-size:34px;color:var(--gold-soft);font-weight:800;line-height:1;}
+  .stat .lbl{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:9px;}
+
+  /* sections */
+  section.block{padding:52px 0;border-bottom:1px solid var(--line);}
+  h2.sec{
+    font-size:clamp(26px,4vw,38px);font-weight:800;margin:10px 0 22px;
+    font-family:"Playfair Display",Georgia,serif;
+  }
+  .lead{font-size:18px;color:var(--cream);opacity:.92;max-width:70ch;}
+  .lead + p{margin-top:16px;color:var(--muted);max-width:72ch;}
+  p + p{margin-top:14px;}
+  .body p{color:#d8d0c2;max-width:72ch;}
+
+  /* format cards */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:26px;}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px 20px;
+  }
+  .card h3{font-size:19px;color:#fff;margin-bottom:4px;font-family:"Playfair Display",Georgia,serif;}
+  .card .kicker{font-size:12px;color:var(--gold);font-style:italic;margin-bottom:12px;}
+  .card p{font-size:14px;color:var(--muted);}
+
+  /* why list */
+  .why{display:grid;grid-template-columns:1fr 1fr;gap:16px 34px;margin-top:24px;}
+  .why div{display:flex;gap:12px;font-size:15px;color:#d8d0c2;}
+  .why .dot{color:var(--gold);font-weight:800;flex:0 0 auto;}
+
+  /* reviews */
+  .rev-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+  .stars{color:var(--gold);letter-spacing:3px;font-size:20px;}
+  .quotes{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px;}
+  .quote{
+    background:var(--panel);border-left:3px solid var(--gold);border-radius:6px;padding:18px 20px;
+  }
+  .quote p{font-style:italic;color:#e8e1d3;font-size:15px;}
+  .quote .who{margin-top:10px;font-size:12px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;}
+  .fillnote{color:var(--gold);}
+
+  /* rider + facts */
+  .two{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;}
+  .rider li{margin:10px 0;color:#d8d0c2;font-size:15px;list-style:none;padding-left:22px;position:relative;}
+  .rider li::before{content:"›";position:absolute;left:0;color:var(--gold);font-weight:800;}
+  .facts{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 22px;}
+  .facts .row{display:flex;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:14px;}
+  .facts .row:last-child{border-bottom:none;}
+  .facts .k{color:var(--muted);letter-spacing:.05em;}
+  .facts .v{color:#fff;text-align:right;font-weight:600;}
+
+  /* CTA */
+  .cta{padding:64px 0;text-align:center;
+    background:radial-gradient(900px 400px at 50% 120%, rgba(201,162,74,.18), transparent 60%);}
+  .cta h2{font-size:clamp(28px,5vw,46px);font-family:"Playfair Display",Georgia,serif;font-weight:800;}
+  .cta h2 em{color:var(--gold-soft);}
+  .btn{
+    display:inline-block;margin-top:24px;background:var(--gold);color:#1a1510;
+    font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:14px;
+    padding:16px 34px;border-radius:6px;text-decoration:none;
+  }
+  .cta .sub{margin-top:16px;color:var(--muted);font-size:14px;}
+
+  footer{padding:30px 0;text-align:center;color:var(--muted);font-size:13px;}
+  footer a{color:var(--gold-soft);text-decoration:none;}
+  footer .sep{margin:0 10px;color:var(--line);}
+
+  a.gold{color:var(--gold-soft);}
+
+  @media(max-width:720px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .stat:nth-child(2){border-right:none;}
+    .cards,.why,.quotes,.two{grid-template-columns:1fr;}
+    .stat{border-right:none;border-bottom:1px solid var(--line);}
+  }
+
+  /* print / PDF */
+  @media print{
+    body{background:#fff;color:#111;}
+    .ribbon,.cta .btn{display:none;}
+    .hero,.stats,section.block,.cta{background:#fff !important;border-color:#ddd;}
+    h1.name{background:none;-webkit-text-fill-color:#111;color:#111;}
+    .stat .num{color:#8a6d1f;}
+    .card,.facts,.quote{background:#faf7f1;border-color:#ddd;}
+    .lead,.body p,.rider li,.why div,.card p,.quote p{color:#222;}
+    .eyebrow,.stat .lbl,.card .kicker,.facts .k{color:#8a6d1f;}
+    a{color:#111;}
+    section.block{padding:26px 0;page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+
+<div class="ribbon">Corporate Booking Kit &nbsp;·&nbsp; texasmentalist.com &nbsp;·&nbsp; Austin, Texas</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="wrap">
+    <div class="hero-photo" style="background-image:url('https://static.wixstatic.com/media/b4bfee_d01af0053225429cb5c04b8c1e330205~mv2.jpg/v1/crop/x_0,y_333,w_3192,h_4123/fill/w_600,h_740,al_c,q_90/file.jpg')"></div>
+    <div class="hero-copy">
+      <div class="eyebrow">Corporate Mentalist &nbsp;·&nbsp; Keynote-Level Entertainment</div>
+      <h1 class="name serif">Shine,<br>The Mentalist</h1>
+      <div class="tagline">Corporate entertainment that makes your guests the show.</div>
+      <div class="hero-contact">
+        <span><b>Book:</b> (737) 271-5308</span>
+        <span><b>Web:</b> texasmentalist.com</span>
+        <span><b>Based in:</b> Austin, TX</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="num">156</div><div class="lbl">Five-Star Google Reviews</div></div>
+  <div class="stat"><div class="num">20+ yrs</div><div class="lbl">As a Tech Executive</div></div>
+  <div class="stat"><div class="num">20–300+</div><div class="lbl">Guests Per Show</div></div>
+  <div class="stat"><div class="num">100%</div><div class="lbl">Clean &amp; Executive-Safe</div></div>
+</div>
+
+<!-- ABOUT -->
+<section class="block">
+  <div class="wrap body">
+    <div class="eyebrow">Section 01</div>
+    <h2 class="sec">About Shine</h2>
+    <p class="lead">Most corporate entertainment is watched. Mentalism is experienced. Shine turns your own
+      guests into the stars of the impossible — thoughts revealed, decisions predicted, and moments your
+      team is still talking about at the next quarterly meeting.</p>
+    <p>Before he took the stage, Shine spent 20+ years as a technology executive. That background is his edge:
+      he knows exactly what a corporate room needs — entertainment that is smart, polished, and completely
+      safe in front of your executives, your clients, and your HR team. No embarrassment, no crude material,
+      no awkward moments. Just genuine astonishment.</p>
+    <p>Based in Austin and performing across Central Texas and beyond, Shine tailors every performance to the
+      event in front of him — weaving in your company name, your product, or your event theme so the show
+      feels made for your room, because it is.</p>
+  </div>
+</section>
+
+<!-- FORMATS -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow">Section 02</div>
+    <h2 class="sec">Signature Formats</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>Strolling Mentalism</h3>
+        <div class="kicker">Cocktail hours, receptions, trade shows.</div>
+        <p>Shine moves group to group performing close-up mind reading and visual magic. Perfect for
+          networking events where you want conversation starters, not a captive audience.</p>
+      </div>
+      <div class="card">
+        <h3>Stage Show</h3>
+        <div class="kicker">Dinners, galas, awards nights, holiday parties.</div>
+        <p>A 30–45 minute interactive performance where your own guests star in the impossible. Scales
+          from a 20-person leadership dinner to a 300+ person conference.</p>
+      </div>
+      <div class="card">
+        <h3>Combination Package</h3>
+        <div class="kicker">The most-booked corporate option.</div>
+        <p>Strolling during cocktails, then a full stage show after dinner. The go-to choice for holiday
+          parties and client-appreciation events.</p>
+      </div>
+    </div>
+    <p style="margin-top:20px;color:var(--muted);font-size:14px;">Every show can be customized with your
+      company name, product, or event theme.</p>
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow">Section 03</div>
+    <h2 class="sec">Why Companies Book Shine</h2>
+    <div class="why">
+      <div><span class="dot">›</span><span><b>Executive-safe by design.</b> 100% clean material — nothing that risks an awkward moment in front of leadership or clients.</span></div>
+      <div><span class="dot">›</span><span><b>He speaks corporate.</b> 20+ years as a tech executive means he reads a business room and delivers accordingly.</span></div>
+      <div><span class="dot">›</span><span><b>Built for planners &amp; DMCs.</b> Formal performance agreements, W-9s, and invoicing that work with corporate procurement.</span></div>
+      <div><span class="dot">›</span><span><b>Scales to your event.</b> From a 20-person leadership dinner to a 300+ person conference ballroom.</span></div>
+      <div><span class="dot">›</span><span><b>Fully customized.</b> Your company name, product, or theme woven into the performance.</span></div>
+      <div><span class="dot">›</span><span><b>Low lift for you.</b> Shine coordinates directly with your venue and handles the technical details.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow">Section 04</div>
+    <div class="rev-head">
+      <h2 class="sec" style="margin-bottom:6px;">What Clients Say</h2>
+      <div class="stars">★★★★★</div>
+    </div>
+    <p style="color:var(--muted);margin-bottom:6px;">156 five-star reviews on Google —
+      <a class="gold" href="https://www.texasmentalist.com/">read them all at texasmentalist.com</a>.</p>
+    <div class="quotes">
+      <div class="quote">
+        <p>&ldquo;Shine delivered a truly brilliant performance… Managing a crowd of 500+ attendees is no small feat, yet Shine commanded the room with ease. What stood out most was how perfectly he tailored the segments… He doesn&rsquo;t just perform; he creates an engaging experience that people will talk about long after the show ends.&rdquo;</p>
+        <div class="who">— Abdul K. · Corporate event, Houston · 500+ guests</div>
+      </div>
+      <div class="quote">
+        <p>&ldquo;Shine was amazing. He had my friends shrieking and chanting and in utter disbelief. No one could stop talking about it for the rest of the party. Some of the best money I ever spent.&rdquo;</p>
+        <div class="who">— Jordyn R. · Five-star Google review</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RIDER + FACTS -->
+<section class="block">
+  <div class="wrap two">
+    <div>
+      <div class="eyebrow">Section 05</div>
+      <h2 class="sec">What Shine Needs From Your Venue</h2>
+      <ul class="rider">
+        <li><b>Strolling sets:</b> nothing at all — no setup, no stage, no A/V.</li>
+        <li><b>Stage shows:</b> a sound system with a wireless microphone and a small performance area.</li>
+        <li><b>Larger rooms (150+):</b> a raised stage and a screen/projector are helpful but not required.</li>
+        <li><b>Timing:</b> Shine coordinates the run-of-show directly with you or your venue/planner.</li>
+        <li><b>Paperwork:</b> performance agreement, W-9, and certificate of insurance available on request.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="eyebrow">At a Glance</div>
+      <div class="facts" style="margin-top:14px;">
+        <div class="row"><span class="k">Specialty</span><span class="v">Corporate Mentalism</span></div>
+        <div class="row"><span class="k">Show Length</span><span class="v">30–45 min (customizable)</span></div>
+        <div class="row"><span class="k">Guest Range</span><span class="v">20 to 300+</span></div>
+        <div class="row"><span class="k">Based In</span><span class="v">Austin, TX</span></div>
+        <div class="row"><span class="k">Service Area</span><span class="v">Austin · All of Texas</span></div>
+        <div class="row"><span class="k">Availability</span><span class="v">Year-round · Limited holiday dates</span></div>
+        <div class="row"><span class="k">Content</span><span class="v">100% clean / HR-safe</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta">
+  <div class="wrap">
+    <div class="eyebrow">Book Shine</div>
+    <h2 class="serif">Give Your Team an Event<br>Worth <em>Talking About</em></h2>
+    <a class="btn" href="https://www.texasmentalist.com/corporate-events-austin">Check Your Date</a>
+    <div class="sub">Dates are held on a first-come basis — holiday season fills fastest.</div>
+    <div class="hero-contact" style="justify-content:center;margin-top:22px;">
+      <span><b>Call/Text:</b> (737) 271-5308</span>
+      <span><b>Web:</b> texasmentalist.com</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    Shine, The Mentalist · Corporate Mentalist · Austin, TX
+    <span class="sep">|</span>
+    <a href="https://www.texasmentalist.com/">texasmentalist.com</a>
+    <span class="sep">|</span>
+    <a href="https://www.instagram.com/shine.mentalist/">@shine.mentalist</a>
+  </div>
+</footer>
+
+</body>
+</html>
