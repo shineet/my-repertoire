@@ -5,6 +5,12 @@
       "has": [{ "type": "host", "value": "press.texasmentalist.com" }],
       "destination": "/press-kit",
       "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "private.texasmentalist.com" }],
+      "destination": "/private-events",
+      "permanent": false
     }
   ]
 }
