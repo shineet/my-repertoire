@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private Events &amp; Parties — Shine, The Mentalist</title>
+<meta name="description" content="Mind-reading entertainment for birthdays, bachelorette parties, anniversaries, and private celebrations in Austin and across Texas. 156 five-star reviews.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141210;
+    --panel:#1c1a17;
+    --cream:#f4efe6;
+    --muted:#a99f8e;
+    --gold:#c9a24a;
+    --gold-soft:#e3c77e;
+    --line:rgba(201,162,74,.28);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--ink);
+    color:var(--cream);
+    font-family:"Montserrat","Avenir Next","Segoe UI",Helvetica,Arial,sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .serif{font-family:"Playfair Display",Georgia,"Times New Roman",serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:0 32px;}
+  .eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+  .ribbon{background:#000;color:var(--gold-soft);text-align:center;font-size:11px;letter-spacing:.28em;text-transform:uppercase;padding:9px 12px;border-bottom:1px solid var(--line);}
+
+  .hero{padding:72px 0 56px;background:radial-gradient(1200px 500px at 80% -10%, rgba(201,162,74,.16), transparent 60%),linear-gradient(180deg,#100e0c,#1a1714);border-bottom:1px solid var(--line);}
+  .hero .wrap{display:flex;gap:40px;align-items:center;flex-wrap:wrap;}
+  .hero-photo{flex:0 0 230px;height:280px;border-radius:10px;overflow:hidden;background:#2a2620 center/cover no-repeat;border:1px solid var(--line);}
+  .hero-copy{flex:1;min-width:280px;}
+  h1.name{font-size:clamp(40px,7vw,74px);line-height:.98;font-weight:800;letter-spacing:.01em;margin:14px 0 10px;background:linear-gradient(90deg,#fff,var(--gold-soft));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .tagline{font-size:clamp(17px,2.4vw,22px);color:var(--cream);opacity:.9;font-style:italic;}
+  .hero-contact{margin-top:22px;font-size:14px;color:var(--muted);}
+  .hero-contact b{color:var(--cream);font-weight:600;}
+  .hero-contact span{margin-right:18px;white-space:nowrap;}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line);background:var(--panel);}
+  .stat{padding:26px 18px;text-align:center;border-right:1px solid var(--line);}
+  .stat:last-child{border-right:none;}
+  .stat .num{font-family:"Playfair Display",Georgia,serif;font-size:32px;color:var(--gold-soft);font-weight:800;line-height:1;}
+  .stat .lbl{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:9px;}
+
+  section.block{padding:52px 0;border-bottom:1px solid var(--line);}
+  h2.sec{font-size:clamp(26px,4vw,38px);font-weight:800;margin:10px 0 22px;font-family:"Playfair Display",Georgia,serif;}
+  .lead{font-size:18px;color:var(--cream);opacity:.92;max-width:70ch;}
+  .body p{color:#d8d0c2;max-width:72ch;}
+  p + p{margin-top:14px;}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;margin-top:26px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px 20px;}
+  .card h3{font-size:18px;color:#fff;margin-bottom:6px;font-family:"Playfair Display",Georgia,serif;}
+  .card p{font-size:14px;color:var(--muted);}
+
+  .why{display:grid;grid-template-columns:1fr 1fr;gap:16px 34px;margin-top:24px;}
+  .why div{display:flex;gap:12px;font-size:15px;color:#d8d0c2;}
+  .why .dot{color:var(--gold);font-weight:800;flex:0 0 auto;}
+
+  .cta{padding:64px 0;text-align:center;background:radial-gradient(900px 400px at 50% 120%, rgba(201,162,74,.18), transparent 60%);}
+  .cta h2{font-size:clamp(28px,5vw,46px);font-family:"Playfair Display",Georgia,serif;font-weight:800;}
+  .cta h2 em{color:var(--gold-soft);}
+  .btn{display:inline-block;margin-top:24px;background:var(--gold);color:#1a1510;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:14px;padding:16px 34px;border-radius:6px;text-decoration:none;}
+  .cta .sub{margin-top:16px;color:var(--muted);font-size:14px;}
+
+  footer{padding:30px 0;text-align:center;color:var(--muted);font-size:13px;}
+  footer a{color:var(--gold-soft);text-decoration:none;}
+  footer .sep{margin:0 10px;color:var(--line);}
+  a.gold{color:var(--gold-soft);}
+
+  @media(max-width:720px){
+    .stats{grid-template-columns:1fr;}
+    .stat{border-right:none;border-bottom:1px solid var(--line);}
+    .why{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="ribbon">Private Events &amp; Parties &nbsp;·&nbsp; texasmentalist.com &nbsp;·&nbsp; Austin, Texas</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="wrap">
+    <div class="hero-photo" style="background-image:url('https://static.wixstatic.com/media/b4bfee_d01af0053225429cb5c04b8c1e330205~mv2.jpg/v1/crop/x_0,y_333,w_3192,h_4123/fill/w_600,h_740,al_c,q_90/file.jpg')"></div>
+    <div class="hero-copy">
+      <div class="eyebrow">Mentalism &amp; Magic &nbsp;·&nbsp; Private Celebrations</div>
+      <h1 class="name serif">Private<br>Events</h1>
+      <div class="tagline">Birthdays, bachelorette parties, and celebrations your guests will never forget.</div>
+      <div class="hero-contact">
+        <span><b>Book:</b> (737) 271-5308</span>
+        <span><b>Web:</b> texasmentalist.com</span>
+        <span><b>Based in:</b> Austin, TX</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="num">156</div><div class="lbl">Five-Star Google Reviews</div></div>
+  <div class="stat"><div class="num">100%</div><div class="lbl">Interactive &amp; Personalized</div></div>
+  <div class="stat"><div class="num">Austin</div><div class="lbl">&amp; All of Texas</div></div>
+</div>
+
+<!-- ABOUT -->
+<section class="block">
+  <div class="wrap body">
+    <div class="eyebrow">The Experience</div>
+    <h2 class="sec">Memorable Performances</h2>
+    <p class="lead">Most party entertainment is watched. Mentalism is experienced. Your guests don&rsquo;t just
+      see a show — they become part of it. Thoughts read, choices predicted, and moments people will be
+      re-telling long after the party ends.</p>
+    <p>My goal is to produce unforgettable performances built around the people in the room. I tailor the
+      show to your occasion, your guest of honor, and your crowd, so it feels personal, not generic. Clean,
+      genuinely fun, and impossible to forget.</p>
+  </div>
+</section>
+
+<!-- OCCASIONS -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow">Occasions</div>
+    <h2 class="sec">Perfect For</h2>
+    <div class="cards">
+      <div class="card"><h3>Milestone Birthdays</h3><p>Make the guest of honor the star of the impossible — a birthday nobody stops talking about.</p></div>
+      <div class="card"><h3>Bachelorette Parties</h3><p>High-energy, interactive mind reading that gets the whole group shrieking, guessing, and cheering.</p></div>
+      <div class="card"><h3>Anniversaries</h3><p>A warm, personal performance built around your story and the people celebrating with you.</p></div>
+      <div class="card"><h3>Ladies&rsquo; Night</h3><p>Close-up mentalism and magic that turns a fun night out into a genuinely jaw-dropping one.</p></div>
+      <div class="card"><h3>Any Theme You Imagine</h3><p>Themed or milestone celebration? I&rsquo;ll create a custom performance to fit it. Let your imagination go wild.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow">Why Guests Love It</div>
+    <h2 class="sec">What Makes It Work</h2>
+    <div class="why">
+      <div><span class="dot">›</span><span><b>Everyone&rsquo;s involved.</b> Your guests star in the show — it&rsquo;s a shared experience, not a stage act they watch from a distance.</span></div>
+      <div><span class="dot">›</span><span><b>Personalized to your event.</b> Built around your guest of honor, your theme, and your crowd.</span></div>
+      <div><span class="dot">›</span><span><b>Fun, never awkward.</b> No one gets embarrassed. Just genuine astonishment and a lot of laughs.</span></div>
+      <div><span class="dot">›</span><span><b>Almost no setup.</b> I can perform strolling through the party or as a short feature — I keep it easy on you.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta">
+  <div class="wrap">
+    <div class="eyebrow">Book Shine</div>
+    <h2 class="serif">Give Your Guests a Night<br>Worth <em>Talking About</em></h2>
+    <a class="btn" href="https://www.texasmentalist.com/contact-8">Check Your Date</a>
+    <div class="sub">Dates are held on a first-come basis — popular weekends fill fast.</div>
+    <div class="hero-contact" style="justify-content:center;margin-top:22px;">
+      <span><b>Call/Text:</b> (737) 271-5308</span>
+      <span><b>Web:</b> texasmentalist.com</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    Shine, The Mentalist · Private Events · Austin, TX
+    <span class="sep">|</span>
+    <a href="https://www.texasmentalist.com/">texasmentalist.com</a>
+    <span class="sep">|</span>
+    <a href="https://www.instagram.com/shine.mentalist/">@shine.mentalist</a>
+  </div>
+</footer>
+
+</body>
+</html>
