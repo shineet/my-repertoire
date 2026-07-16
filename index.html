@@ -1514,7 +1514,9 @@
             const pTitle = params.get('title');
             const pView = params.get('view');
             const findByDate = () => {
-                const byDate = G.filter(g => g.date === pDate && !isTemplate(g));
+                // Exclude gigs already linked to a DIFFERENT booking's srcId — otherwise two
+                // bookings sharing the same event date collide and steal each other's gig.
+                const byDate = G.filter(g => g.date === pDate && !isTemplate(g) && (!g.srcId || g.srcId === pGig));
                 if (byDate.length === 1) return byDate[0];
                 if (byDate.length > 1 && pName) {
                     const nl = pName.toLowerCase();
