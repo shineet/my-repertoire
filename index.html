@@ -1656,7 +1656,7 @@
             btns = btn('+ New Gig', 'data-a="open-add-g"', 'go');
         else if (view === 'gig') {
             const g = cg();
-            btns = btn('← Back', 'data-a="nav-gigs"', 'gh', true) + ' ' + btn('Edit', 'data-a="edit-gig"', 'ot', true) + ' ' + btn('Duplicate', 'data-a="dup-gig"', 'ot', true) + ' ' + btn(reorderingGig ? '✓ Done' : 'Edit Order', 'data-a="tog-reorder-gig"', reorderingGig ? 'go' : 'ot', true) + ' ' + btn('+ Add Routines', 'data-a="open-picker"', 'go', true);
+            btns = btn('← Back', 'data-a="nav-gigs"', 'gh', true) + ' ' + btn('Edit', 'data-a="edit-gig"', 'ot', true) + ' ' + btn('Duplicate', 'data-a="dup-gig"', 'ot', true) + ' ' + btn('Copy From…', 'data-a="copy-into"', 'ot', true) + ' ' + btn(reorderingGig ? '✓ Done' : 'Edit Order', 'data-a="tog-reorder-gig"', reorderingGig ? 'go' : 'ot', true) + ' ' + btn('+ Add Routines', 'data-a="open-picker"', 'go', true);
         }
         return `<div style="border-bottom:1px solid #1E2140;padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:#0B0D1A;z-index:10;flex-wrap:wrap;">
     <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;white-space:nowrap;color:#C9A047;">✦ The Repertoire</div>
@@ -2030,6 +2030,23 @@
       <div style="border-top:1px solid ${K.br};margin:16px 0 12px;"></div>
       <div style="font-size:10px;color:${K.dm};letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;">Or assign these ${nR} routines to another gig</div>
       ${tgtHtml}
+    </div>`;
+        }
+        else if (modal === 'copyinto') {
+            const tgt = cg();
+            const srcRow = g => `<button data-a="do-copy-into" data-id="${g.id}" style="display:block;width:100%;text-align:left;background:${K.ip};border:1px solid ${K.br};border-radius:8px;padding:9px 11px;margin-bottom:6px;cursor:pointer;color:${K.tx};font-family:inherit;">
+          <div style="font-weight:600;font-size:13px;">${esc(g.name)}</div>
+          <div style="font-size:11px;color:${K.dm};margin-top:2px;">${[g.client, g.date, ((g.routineIds || []).length) + ' routines'].filter(Boolean).map(esc).join(' · ')}</div>
+        </button>`;
+            const templates = G.filter(g => g.id !== gid && isTemplate(g));
+            const others = G.filter(g => g.id !== gid && !isTemplate(g));
+            const listHtml = (templates.length ? `<div style="font-size:10px;color:${K.dm};letter-spacing:.1em;text-transform:uppercase;margin:2px 0 6px;">Templates</div>${templates.map(srcRow).join('')}` : '')
+                + (others.length ? `<div style="font-size:10px;color:${K.dm};letter-spacing:.1em;text-transform:uppercase;margin:${templates.length ? '14px' : '2px'} 0 6px;">Gigs</div>${others.map(srcRow).join('')}` : '')
+                || `<div style="font-size:12px;color:${K.dm};padding:4px 2px;line-height:1.5;">No other gigs or templates yet.</div>`;
+            ov.innerHTML = `<div style="${bx(420)}" class="modal-box" id="mb">${mt('Copy Routines Into "' + esc(tgt.name) + '"')}
+      <div style="font-size:10px;color:${K.dm};letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;">Pick a gig or template to copy from</div>
+      ${listHtml}
+      ${ma(btn('Cancel', 'data-a="close-modal"'))}
     </div>`;
         }
         else if (modal === 'picker') {
@@ -2532,6 +2549,32 @@
                 G = G.map(g => g.id === tgt.id ? { ...g, routineIds: ids } : g);
                 gid = tgt.id;
                 view = 'gig';
+                modal = null;
+                await save();
+                render();
+                break;
+            }
+        case 'copy-into':
+            {
+                modal = 'copyinto';
+                render();
+                break;
+            }
+        case 'do-copy-into':
+            {
+                const src = G.find(g => g.id === id);
+                const tgt = cg();
+                if (!src || !tgt)
+                    break;
+                const srcIds = src.routineIds || [];
+                const cur = tgt.routineIds || [];
+                let ids = [...srcIds];
+                if (cur.length) {
+                    const replace = confirm(`"${tgt.name}" already has ${cur.length} routine(s).\n\nOK = REPLACE them with the ${srcIds.length} from "${src.name}".\nCancel = ADD these on top of the existing ones.`);
+                    if (!replace)
+                        ids = [...cur, ...srcIds.filter(x => !cur.includes(x))];
+                }
+                G = G.map(g => g.id === tgt.id ? { ...g, routineIds: ids } : g);
                 modal = null;
                 await save();
                 render();
