@@ -1531,7 +1531,12 @@
                 if (!match && pDate) match = findByDate();
                 if (!match) {
                     // First click for this booking -> create a new gig and open it to add routines
-                    match = { id: uid(), name: (pTitle || pEvent || pName || 'New Gig'), client: pName || '', date: pDate || '', notes: '', routineIds: [], srcId: pGig };
+                    // pEvent is often just a generic category bucket ("Private celebration" /
+                    // "Corporate event" — defaulted in select-package.js/chat.js), not a real
+                    // identifying label, so it must rank below the client's actual name. pTitle
+                    // stays first since it's only ever set to something deliberate and specific
+                    // (e.g. a corporate event's actual name).
+                    match = { id: uid(), name: (pTitle || pName || pEvent || 'New Gig'), client: pName || '', date: pDate || '', notes: '', routineIds: [], srcId: pGig };
                     G = [match, ...G];
                     try { await save(); } catch (e) {}
                 } else if (!match.srcId) {
