@@ -1873,7 +1873,10 @@
       <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px;">${
         esc(g.name)}</div>
       <div style="font-size:12px;color:#555E7A;">${[g.client, g.date, grs.length + ' routines', '⏱ ' + fmt(tot(grs))].filter(Boolean).join(' · ')}</div>
-      ${g.notes ? `<div style="font-size:13px;color:#888CAA;margin-top:5px;">${esc(g.notes)}</div>` : ''}
+    </div>
+    <div style="margin-bottom:22px;">
+      <div style="font-size:10px;color:#555E7A;text-transform:uppercase;letter-spacing:.12em;font-weight:600;margin-bottom:8px;">📝 Notes</div>
+      <textarea data-a="edit-gig-notes" data-id="${g.id}" style="width:100%;background:#0F1120;border:1px solid #1E2140;border-radius:10px;padding:11px 14px;color:#888CAA;font-size:13px;line-height:1.6;font-family:inherit;resize:none;overflow:hidden;box-sizing:border-box;" placeholder="Venue, set length, requests…">${esc(g.notes || '')}</textarea>
     </div>
     ${
         !grs.length ? `<div style="text-align:center;padding:50px 0;color:#555E7A;"><div style="margin-bottom:16px;">No routines in this setlist yet.</div>${btn('+ Add from Master List', 'data-a="open-picker"', 'go')}</div>` : `<div style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">
@@ -2153,23 +2156,30 @@
         }
     });
     function autoResizeTAs() {
-        document.querySelectorAll('textarea[data-a="edit-notes"]').forEach(ta => {
+        document.querySelectorAll('textarea[data-a="edit-notes"], textarea[data-a="edit-gig-notes"]').forEach(ta => {
             ta.style.height = 'auto';
             ta.style.height = ta.scrollHeight + 'px';
         });
     }
 
     document.getElementById('app').addEventListener('input', function(e) {
-        const ta = e.target.closest('textarea[data-a="edit-notes"]');
+        const ta = e.target.closest('textarea[data-a="edit-notes"], textarea[data-a="edit-gig-notes"]');
         if (!ta)
             return;
         ta.style.height = 'auto';
         ta.style.height = ta.scrollHeight + 'px';
         const id = ta.dataset.id;
-        R = R.map(r => r.id === id ? {
-            ...r,
-            notes: ta.value
-        } : r);
+        if (ta.dataset.a === 'edit-gig-notes') {
+            G = G.map(g => g.id === id ? {
+                ...g,
+                notes: ta.value
+            } : g);
+        } else {
+            R = R.map(r => r.id === id ? {
+                ...r,
+                notes: ta.value
+            } : r);
+        }
         debounceSave();
     });
 
