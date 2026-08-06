@@ -1469,7 +1469,12 @@
         importedFrom: g.importedFrom || null,
         srcNote: g.srcNote || null,
         srcRoutines: Array.isArray(g.srcRoutines) ? g.srcRoutines : null,
-        packed: (g.packed && typeof g.packed === 'object' && !Array.isArray(g.packed)) ? g.packed : {}
+        packed: (g.packed && typeof g.packed === 'object' && !Array.isArray(g.packed)) ? g.packed : {},
+        // Set remotely by the Booking App's "Mark as Done" (see markRepertoireGigCompleted
+        // in gig-dashboard.html) via a direct write to this same Firebase DB, keyed by
+        // srcId. Forces a same-day (or future-dated) gig straight into Past Gigs instead
+        // of waiting for its date to pass -- see the upcoming/past split in rGigs().
+        completed: !!g.completed
     });
 
     async function load() {
@@ -1763,10 +1768,12 @@
         const isT = isTemplate;
         const today = new Date().toLocaleDateString('en-CA'); // local YYYY-MM-DD
         const allShows = [...G].filter(g => !isT(g));
-        // Upcoming (or undated) on top, soonest first; past gigs drop to the bottom, most recent first.
-        const upcoming = allShows.filter(g => !g.date || g.date >= today)
+        // Upcoming (or undated) on top, soonest first; past gigs drop to the bottom, most
+        // recent first. `completed` (set by the Booking App's Mark as Done, possibly same-
+        // day) forces a gig into Past regardless of its date, same as an actually-past date.
+        const upcoming = allShows.filter(g => !g.completed && (!g.date || g.date >= today))
             .sort((a, b) => (a.date || '9999-12-31').localeCompare(b.date || '9999-12-31'));
-        const past = allShows.filter(g => g.date && g.date < today)
+        const past = allShows.filter(g => g.completed || (g.date && g.date < today))
             .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
         const templates = G.filter(isT);
         const card = g => {
