@@ -103,7 +103,7 @@
 
 <!-- STATS -->
 <div class="stats">
-  <div class="stat"><div class="num">175</div><div class="lbl">Five-Star Google Reviews</div></div>
+  <div class="stat"><div class="num" id="review-count-stat">175</div><div class="lbl">Five-Star Google Reviews</div></div>
   <div class="stat"><div class="num">100%</div><div class="lbl">Interactive &amp; Personalized</div></div>
   <div class="stat"><div class="num">Austin</div><div class="lbl">&amp; All of Texas</div></div>
 </div>
@@ -174,6 +174,18 @@
     <a href="https://www.instagram.com/shine.mentalist/">@shine.mentalist</a>
   </div>
 </footer>
+
+<script>
+  fetch('https://www.texasmentalist.com/_functions/reviewCount')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var value = data && data.reviewCount;
+      if (!value) return;
+      var stat = document.getElementById('review-count-stat');
+      if (stat) stat.textContent = value;
+    })
+    .catch(function () { /* keep the static fallback value */ });
+</script>
 
 </body>
 </html>

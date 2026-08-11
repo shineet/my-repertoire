@@ -187,7 +187,7 @@
 
 <!-- STATS -->
 <div class="stats">
-  <div class="stat"><div class="num">175</div><div class="lbl">Five-Star Google Reviews</div></div>
+  <div class="stat"><div class="num" id="review-count-stat">175</div><div class="lbl">Five-Star Google Reviews</div></div>
   <div class="stat"><div class="num">20+ yrs</div><div class="lbl">As a Tech Executive</div></div>
   <div class="stat"><div class="num">20–300+</div><div class="lbl">Guests Per Show</div></div>
   <div class="stat"><div class="num">100%</div><div class="lbl">Clean &amp; Executive-Safe</div></div>
@@ -265,7 +265,7 @@
       <h2 class="sec" style="margin-bottom:6px;">What Clients Say</h2>
       <div class="stars">★★★★★</div>
     </div>
-    <p style="color:var(--muted);margin-bottom:6px;">175 five-star reviews on Google —
+    <p style="color:var(--muted);margin-bottom:6px;"><span id="review-count-text">175</span> five-star reviews on Google —
       <a class="gold" href="https://www.texasmentalist.com/">read them all at texasmentalist.com</a>.</p>
     <div class="quotes">
       <div class="quote">
@@ -332,6 +332,26 @@
     <a href="https://www.instagram.com/shine.mentalist/">@shine.mentalist</a>
   </div>
 </footer>
+
+<script>
+  // Live review count -- reads from a single Wix Data collection
+  // (site-settings/main.reviewCount) via a public HTTP function, so this
+  // number stays in sync with the Wix site's own pages automatically
+  // instead of being hand-edited here on every update. The 175 baked into
+  // the HTML above is just a fallback shown until this resolves (or if the
+  // fetch fails), not a second source of truth to maintain.
+  fetch('https://www.texasmentalist.com/_functions/reviewCount')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var value = data && data.reviewCount;
+      if (!value) return;
+      var stat = document.getElementById('review-count-stat');
+      var text = document.getElementById('review-count-text');
+      if (stat) stat.textContent = value;
+      if (text) text.textContent = value;
+    })
+    .catch(function () { /* keep the static fallback value */ });
+</script>
 
 </body>
 </html>
