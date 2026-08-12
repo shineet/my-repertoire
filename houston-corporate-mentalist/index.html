@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Corporate Mentalist &amp; Magician in Houston, TX | Shine, The Mentalist</title>
-<meta name="description" content="Corporate mentalist serving Houston. 300+ performances, 175 five-star Google reviews, featured on national TV. Executive-ready mentalism for galas, conferences &amp; client events.">
+<meta name="description" content="Corporate mentalist serving Houston. 300+ performances, hundreds of five-star Google reviews, featured on national TV. Executive-ready mentalism for galas, conferences &amp; client events.">
 <link rel="canonical" href="https://houston.texasmentalist.com/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script type="application/ld+json">
+<script type="application/ld+json" id="ld-json-business">
 {
   "@context": "https://schema.org",
   "@type": "EntertainmentBusiness",
@@ -77,6 +77,10 @@
   .body p{color:#d8d0c2;max-width:72ch;}
   p + p{margin-top:14px;}
 
+  .quote{margin-top:24px;padding:20px 24px;background:var(--panel);border-left:3px solid var(--gold);border-radius:6px;max-width:70ch;}
+  .quote p{font-style:italic;color:var(--cream);font-size:16px;max-width:none;}
+  .quote cite{display:block;margin-top:10px;font-style:normal;color:var(--muted);font-size:13px;}
+
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;margin-top:26px;}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px 20px;}
   .card h3{font-size:18px;color:#fff;margin-bottom:6px;font-family:"Playfair Display",Georgia,serif;}
@@ -111,7 +115,7 @@
 <!-- HERO -->
 <div class="hero">
   <div class="wrap">
-    <div class="hero-photo" style="background-image:url('https://static.wixstatic.com/media/b4bfee_d01af0053225429cb5c04b8c1e330205~mv2.jpg/v1/crop/x_0,y_333,w_3192,h_4123/fill/w_600,h_740,al_c,q_90/file.jpg')"></div>
+    <img class="hero-photo" src="https://static.wixstatic.com/media/b4bfee_d01af0053225429cb5c04b8c1e330205~mv2.jpg/v1/crop/x_0,y_333,w_3192,h_4123/fill/w_600,h_740,al_c,q_90/file.jpg" alt="Shine, The Mentalist performing corporate mind-reading entertainment for a Houston corporate audience" loading="lazy">
     <div class="hero-copy">
       <div class="eyebrow">Corporate Mentalism &amp; Magic &nbsp;·&nbsp; Houston, TX</div>
       <h1 class="name serif">Corporate Entertainment Built for Houston's Energy and Executive Crowd</h1>
@@ -136,9 +140,14 @@
 <section class="block">
   <div class="wrap body">
     <div class="eyebrow">Why Companies Book Shine</div>
-    <h2 class="sec">A Show Built for Houston's Executive Calendar</h2>
+    <h2 class="sec">About Shine, Houston's Corporate Mentalist</h2>
     <p class="lead">Houston's corporate calendar runs on energy-sector conferences, Fortune 500 headquarters events, and galas tied to one of the largest medical centers in the world. It's a city where the audience in the room is often making real decisions, not just attending a party. Shine spent several years as a technology executive before taking the stage, so he knows how to read that kind of room.</p>
-    <p>He's performed corporate shows across Houston and tailors every performance to the caliber of the event — an investor dinner calls for something different than a company-wide holiday party, and the show adjusts accordingly, customized with your company name, product, or event theme.</p>
+    <p>He's performed corporate shows across Houston — including for teams at Chevron, HPE, and Sysco — and tailors every performance to the caliber of the event, from an investor dinner to a company-wide holiday party, customized with your company name, product, or event theme.</p>
+    <p>Other companies that have booked Shine include CDW, Climb, Adaptive Health, The Difference Card, and Pepsi.</p>
+    <div class="quote">
+      <p>"Shine commanded a room of 500+ with ease. Guests were still talking about it long after."</p>
+      <cite>— Abdul K., corporate event, Houston (500+ guests)</cite>
+    </div>
   </div>
 </section>
 
@@ -207,8 +216,24 @@
       if (!value) return;
       var stat = document.getElementById('review-count-stat');
       if (stat) stat.textContent = value;
+      // Keep the EntertainmentBusiness JSON-LD's aggregateRating in sync
+      // with the same live value, not just the visible stat -- Google
+      // supports structured data injected/updated via JS as long as it's
+      // present in the rendered DOM at crawl time, so this avoids ever
+      // needing a manual edit here again (see brain/my-repertoire.md,
+      // wix-review-count-sync memory).
+      var ld = document.getElementById('ld-json-business');
+      if (ld) {
+        try {
+          var json = JSON.parse(ld.textContent);
+          if (json.aggregateRating) {
+            json.aggregateRating.reviewCount = String(value);
+            ld.textContent = JSON.stringify(json);
+          }
+        } catch (e) { /* keep the static fallback JSON-LD */ }
+      }
     })
-    .catch(function () { /* keep the static fallback value */ });
+    .catch(function () { /* keep the static fallback values */ });
 </script>
 
 </body>
