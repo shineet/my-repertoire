@@ -4,7 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Private Events &amp; Parties — Shine, The Mentalist</title>
-<meta name="description" content="Mind-reading entertainment for birthdays, bachelorette parties, anniversaries, and private celebrations in Austin and across Texas. 175 five-star reviews.">
+<meta name="description" content="Mind-reading entertainment for birthdays, bachelorette parties, anniversaries, and private celebrations in Austin and across Texas. Hundreds of five-star reviews.">
+<link rel="canonical" href="https://private.texasmentalist.com/private-events">
+<script type="application/ld+json" id="ld-json-business">
+{
+  "@context": "https://schema.org",
+  "@type": "EntertainmentBusiness",
+  "name": "Shine, The Mentalist",
+  "description": "Interactive mind-reading entertainment for private celebrations — birthdays, bachelorette parties, anniversaries, and themed parties — in Austin and across Texas.",
+  "url": "https://private.texasmentalist.com/private-events",
+  "telephone": "+1-737-271-5308",
+  "areaServed": [
+    { "@type": "City", "name": "Austin, TX" },
+    { "@type": "State", "name": "Texas" }
+  ],
+  "sameAs": [
+    "https://www.facebook.com/p/Shine-The-Mentalist-100064151554555/",
+    "https://www.instagram.com/shine.mentalist/"
+  ],
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5.0",
+    "reviewCount": "176"
+  }
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -183,8 +207,21 @@
       if (!value) return;
       var stat = document.getElementById('review-count-stat');
       if (stat) stat.textContent = value;
+      // Keep the EntertainmentBusiness JSON-LD's aggregateRating in sync
+      // with the same live value -- see brain/my-repertoire.md,
+      // wix-review-count-sync memory.
+      var ld = document.getElementById('ld-json-business');
+      if (ld) {
+        try {
+          var json = JSON.parse(ld.textContent);
+          if (json.aggregateRating) {
+            json.aggregateRating.reviewCount = String(value);
+            ld.textContent = JSON.stringify(json);
+          }
+        } catch (e) { /* keep the static fallback JSON-LD */ }
+      }
     })
-    .catch(function () { /* keep the static fallback value */ });
+    .catch(function () { /* keep the static fallback values */ });
 </script>
 
 </body>

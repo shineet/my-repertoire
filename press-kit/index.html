@@ -4,6 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shine, The Mentalist — Corporate Booking Kit</title>
+<meta name="description" content="Corporate booking kit for Shine, The Mentalist — Austin-based mentalist with hundreds of five-star reviews, 20+ years as a tech executive, clean executive-safe entertainment for 20-300+ guests.">
+<link rel="canonical" href="https://press.texasmentalist.com/press-kit">
+<script type="application/ld+json" id="ld-json-business">
+{
+  "@context": "https://schema.org",
+  "@type": "EntertainmentBusiness",
+  "name": "Shine, The Mentalist",
+  "description": "Corporate booking kit for Shine, The Mentalist — an Austin-based corporate mentalist and magician with 20+ years of tech-executive experience, offering clean, executive-safe entertainment for 20 to 300+ guests.",
+  "url": "https://press.texasmentalist.com/press-kit",
+  "telephone": "+1-737-271-5308",
+  "areaServed": {
+    "@type": "City",
+    "name": "Austin, TX"
+  },
+  "sameAs": [
+    "https://www.facebook.com/p/Shine-The-Mentalist-100064151554555/",
+    "https://www.instagram.com/shine.mentalist/"
+  ],
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5.0",
+    "reviewCount": "176"
+  }
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -349,8 +374,21 @@
       var text = document.getElementById('review-count-text');
       if (stat) stat.textContent = value;
       if (text) text.textContent = value;
+      // Keep the EntertainmentBusiness JSON-LD's aggregateRating in sync
+      // with the same live value, not just the visible text -- see
+      // brain/my-repertoire.md, wix-review-count-sync memory.
+      var ld = document.getElementById('ld-json-business');
+      if (ld) {
+        try {
+          var json = JSON.parse(ld.textContent);
+          if (json.aggregateRating) {
+            json.aggregateRating.reviewCount = String(value);
+            ld.textContent = JSON.stringify(json);
+          }
+        } catch (e) { /* keep the static fallback JSON-LD */ }
+      }
     })
-    .catch(function () { /* keep the static fallback value */ });
+    .catch(function () { /* keep the static fallback values */ });
 </script>
 
 </body>
