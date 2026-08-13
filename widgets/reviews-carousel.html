@@ -114,6 +114,10 @@
     color:var(--gold-soft);font-size:17px;line-height:1;
     cursor:pointer;
     display:flex;align-items:center;justify-content:center;
+    /* Removes the ~300ms tap delay and stops double-tap-to-zoom from
+       eating the first tap on touch devices. */
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
   }
   .nav:hover:not(:disabled){background:#221f1a;border-color:var(--gold);}
   .nav:disabled{opacity:.3;cursor:default;}
@@ -126,6 +130,8 @@
     font-weight:700;letter-spacing:.05em;text-transform:uppercase;
     font-size:12.5px;padding:13px 26px;border-radius:6px;
     text-decoration:none;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
   }
   .cta:hover{background:var(--gold-soft);}
 
@@ -152,8 +158,26 @@
     .card blockquote.clamped{-webkit-line-clamp:4;}
     .meta{padding-top:9px;}
     .meta .via{margin-top:6px;}
-    .controls{margin-top:14px;gap:10px;}
-    .nav{width:38px;height:38px;}
+    /* Wix renders the mobile embed in a ~320px-wide iframe (then scales it
+       up), which is too narrow for arrow + button + arrow on one row --
+       they were wrapping into three stacked rows and reading as broken.
+       Lay it out deliberately instead: both arrows together on one row,
+       full-width CTA beneath. */
+    .controls{
+      margin-top:14px;
+      gap:12px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      padding:0 16px;
+    }
+    .nav{width:100%;height:46px;border-radius:8px;}
+    .cta{
+      grid-column:1 / -1;
+      text-align:center;
+      padding:15px 12px;
+      font-size:12px;
+      letter-spacing:.03em;
+    }
     /* Expanding "Read more" would otherwise grow the card and push the
        controls back below the clip line. Scroll the quote inside the card
        instead so overall height stays fixed. */
@@ -298,6 +322,22 @@
 
       if (s.reviewsUrl) {
         viewall.href = s.reviewsUrl;
+
+        // Wix embeds this widget in a sandboxed iframe. Plain
+        // target="_blank" is silently blocked there when the sandbox
+        // omits allow-popups -- which is why tapping this did nothing on
+        // mobile. Try window.open first, then fall back to navigating the
+        // top-level window, then to the iframe itself. One of the three
+        // always works.
+        viewall.addEventListener('click', function (e) {
+          e.preventDefault();
+          var url = s.reviewsUrl;
+          var win = null;
+          try { win = window.open(url, '_blank', 'noopener'); } catch (err) { win = null; }
+          if (win) return;
+          try { window.top.location.href = url; return; } catch (err) {}
+          window.location.href = url;
+        });
       } else {
         viewall.style.display = 'none';
       }
