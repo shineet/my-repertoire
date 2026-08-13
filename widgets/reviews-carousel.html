@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#000;
+    --panel:#141210;
+    --cream:#f4efe6;
+    --muted:#a99f8e;
+    --gold:#c9a24a;
+    --gold-soft:#e3c77e;
+    --line:rgba(201,162,74,.28);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--ink);}
+  body{
+    font-family:"Montserrat","Avenir Next","Segoe UI",Helvetica,Arial,sans-serif;
+    color:var(--cream);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  /* Hidden until we know there's real data to show. Never render an
+     empty or broken rail -- the section simply doesn't exist instead. */
+  #section{display:none;padding:8px 0 16px;}
+  #section.ready{display:block;}
+
+  .head{text-align:center;padding:0 20px 22px;}
+  .head h2{
+    font-family:"Playfair Display",Georgia,serif;
+    font-weight:800;
+    font-size:clamp(26px,4.2vw,40px);
+    line-height:1.15;
+    background:linear-gradient(90deg,#fff,var(--gold-soft));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .head .rating-line{
+    margin-top:12px;
+    display:flex;align-items:center;justify-content:center;
+    gap:10px;flex-wrap:wrap;
+    font-size:14px;color:var(--muted);
+  }
+  .stars{color:var(--gold);letter-spacing:2px;font-size:17px;}
+  .head strong{color:var(--cream);font-weight:600;}
+
+  /* Viewport + track */
+  .viewport{overflow:hidden;padding:4px 0;}
+  .track{
+    display:flex;
+    gap:18px;
+    padding:0 max(20px, calc((100% - 1120px) / 2));
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    scroll-behavior:smooth;
+    /* Hide scrollbar -- navigation is via buttons/swipe/keyboard. */
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+  }
+  .track::-webkit-scrollbar{display:none;}
+
+  .card{
+    flex:0 0 calc((100% - 36px) / 3);
+    scroll-snap-align:start;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:24px 24px 20px;
+    display:flex;flex-direction:column;gap:12px;
+    min-height:230px;
+  }
+  .card .c-stars{color:var(--gold);letter-spacing:2px;font-size:15px;}
+  .card blockquote{
+    color:var(--cream);
+    font-size:14.5px;line-height:1.6;
+    font-style:italic;
+    margin:0;
+  }
+  .card blockquote.clamped{
+    display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .readmore{
+    align-self:flex-start;
+    background:none;border:none;padding:0;
+    color:var(--gold-soft);font:inherit;font-size:12.5px;font-style:normal;
+    cursor:pointer;text-decoration:underline;
+  }
+  .readmore:hover{color:var(--gold);}
+  .meta{margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.06);}
+  .meta .who{color:var(--cream);font-size:13.5px;font-weight:600;}
+  .meta .ctx{color:var(--muted);font-size:12px;margin-top:3px;}
+  .meta .via{
+    color:var(--muted);font-size:10.5px;letter-spacing:.06em;
+    margin-top:8px;display:flex;align-items:center;gap:6px;
+  }
+  .g-mark{
+    font-family:"Playfair Display",Georgia,serif;
+    font-weight:800;font-size:13px;color:var(--gold-soft);
+    line-height:1;
+  }
+
+  /* Controls */
+  .controls{
+    display:flex;align-items:center;justify-content:center;
+    gap:14px;margin-top:20px;padding:0 20px;flex-wrap:wrap;
+  }
+  .nav{
+    width:42px;height:42px;border-radius:50%;
+    background:var(--panel);border:1px solid var(--line);
+    color:var(--gold-soft);font-size:17px;line-height:1;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .nav:hover:not(:disabled){background:#221f1a;border-color:var(--gold);}
+  .nav:disabled{opacity:.3;cursor:default;}
+  .nav:focus-visible,.readmore:focus-visible,.cta:focus-visible{
+    outline:2px solid var(--gold-soft);outline-offset:3px;
+  }
+  .cta{
+    display:inline-block;
+    background:var(--gold);color:#1a1510;
+    font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    font-size:12.5px;padding:13px 26px;border-radius:6px;
+    text-decoration:none;
+  }
+  .cta:hover{background:var(--gold-soft);}
+
+  @media(max-width:900px){
+    .card{flex:0 0 calc((100% - 18px) / 2);}
+  }
+  @media(max-width:600px){
+    .card{flex:0 0 88%;}
+    .track{padding:0 16px;}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .track{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<section id="section" aria-labelledby="rev-heading">
+  <div class="head">
+    <h2 id="rev-heading">Loved by Audiences Across Texas</h2>
+    <div class="rating-line">
+      <span class="stars" aria-hidden="true">★★★★★</span>
+      <span id="summary-line"></span>
+    </div>
+  </div>
+
+  <div class="viewport">
+    <div class="track" id="track" tabindex="0" role="region"
+         aria-label="Google reviews, use arrow keys to scroll"></div>
+  </div>
+
+  <div class="controls">
+    <button class="nav" id="prev" type="button" aria-label="Previous reviews">&#8249;</button>
+    <a class="cta" id="viewall" href="#" target="_blank" rel="noopener noreferrer">View All Google Reviews</a>
+    <button class="nav" id="next" type="button" aria-label="Next reviews">&#8250;</button>
+  </div>
+</section>
+
+<script>
+(function () {
+  var ENDPOINT = 'https://www.texasmentalist.com/_functions/reviews';
+  var CLAMP_AT = 240; // characters before we offer "Read more"
+
+  var section = document.getElementById('section');
+  var track = document.getElementById('track');
+  var prev = document.getElementById('prev');
+  var next = document.getElementById('next');
+  var viewall = document.getElementById('viewall');
+  var summaryLine = document.getElementById('summary-line');
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function starsFor(n) {
+    var r = Math.max(0, Math.min(5, Math.round(Number(n) || 0)));
+    return '★'.repeat(r) + '☆'.repeat(5 - r);
+  }
+
+  function buildCard(rev) {
+    var card = document.createElement('article');
+    card.className = 'card';
+
+    var long = (rev.quote || '').length > CLAMP_AT;
+
+    // Star rating is given an accessible text label; the glyphs
+    // themselves are hidden from screen readers so they aren't read
+    // out as a string of unicode characters.
+    var html =
+      '<div class="c-stars" role="img" aria-label="' + rev.rating + ' out of 5 stars">' +
+        '<span aria-hidden="true">' + starsFor(rev.rating) + '</span>' +
+      '</div>' +
+      '<blockquote class="' + (long ? 'clamped' : '') + '">' + esc(rev.quote) + '</blockquote>';
+
+    if (long) {
+      html += '<button class="readmore" type="button">Read more</button>';
+    }
+
+    html +=
+      '<div class="meta">' +
+        '<div class="who">' + esc(rev.name) + '</div>' +
+        // Only rendered when real context exists. Never invented.
+        (rev.eventContext ? '<div class="ctx">' + esc(rev.eventContext) + '</div>' : '') +
+        '<div class="via"><span class="g-mark" aria-hidden="true">G</span> Review via Google</div>' +
+      '</div>';
+
+    card.innerHTML = html;
+
+    if (long) {
+      var btn = card.querySelector('.readmore');
+      var quote = card.querySelector('blockquote');
+      btn.addEventListener('click', function () {
+        var open = quote.classList.toggle('clamped');
+        btn.textContent = open ? 'Read more' : 'Show less';
+      });
+    }
+    return card;
+  }
+
+  function step() {
+    var card = track.querySelector('.card');
+    return card ? card.getBoundingClientRect().width + 18 : 320;
+  }
+
+  function syncNav() {
+    var maxScroll = track.scrollWidth - track.clientWidth - 2;
+    prev.disabled = track.scrollLeft <= 2;
+    next.disabled = track.scrollLeft >= maxScroll;
+  }
+
+  prev.addEventListener('click', function () { track.scrollBy({ left: -step(), behavior: 'smooth' }); });
+  next.addEventListener('click', function () { track.scrollBy({ left: step(), behavior: 'smooth' }); });
+  track.addEventListener('scroll', syncNav, { passive: true });
+  window.addEventListener('resize', syncNav);
+
+  track.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') { e.preventDefault(); track.scrollBy({ left: step(), behavior: 'smooth' }); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); track.scrollBy({ left: -step(), behavior: 'smooth' }); }
+  });
+
+  // Reports our rendered height up to the Wix embed so the iframe can be
+  // sized to fit instead of showing an inner scrollbar.
+  function reportHeight() {
+    try {
+      var h = document.body.scrollHeight;
+      if (window.parent) window.parent.postMessage({ type: 'reviewsHeight', height: h }, '*');
+    } catch (e) {}
+  }
+
+  fetch(ENDPOINT)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data || !data.configured || !Array.isArray(data.reviews) || !data.reviews.length) {
+        return; // stays hidden
+      }
+
+      data.reviews.forEach(function (rev) { track.appendChild(buildCard(rev)); });
+
+      var s = data.summary || {};
+      var bits = [];
+      if (s.totalReviewCount) bits.push('<strong>' + s.totalReviewCount + ' Five-Star Google Reviews</strong>');
+      else bits.push('<strong>Five-Star Google Reviews</strong>');
+      if (s.averageRating) bits.push(Number(s.averageRating).toFixed(1) + ' average rating');
+      summaryLine.innerHTML = bits.join(' &nbsp;·&nbsp; ');
+
+      if (s.reviewsUrl) {
+        viewall.href = s.reviewsUrl;
+      } else {
+        viewall.style.display = 'none';
+      }
+
+      section.classList.add('ready');
+      syncNav();
+      reportHeight();
+      setTimeout(reportHeight, 400);
+    })
+    .catch(function () { /* stays hidden -- homepage unaffected */ });
+})();
+</script>
+
+</body>
+</html>
