@@ -134,6 +134,7 @@
     -webkit-tap-highlight-color:transparent;
   }
   .cta:hover{background:var(--gold-soft);}
+  .cta-short{display:none;}
 
   @media(max-width:900px){
     .card{flex:0 0 calc((100% - 18px) / 2);}
@@ -158,26 +159,34 @@
     .card blockquote.clamped{-webkit-line-clamp:4;}
     .meta{padding-top:9px;}
     .meta .via{margin-top:6px;}
-    /* Wix renders the mobile embed in a ~320px-wide iframe (then scales it
-       up), which is too narrow for arrow + button + arrow on one row --
-       they were wrapping into three stacked rows and reading as broken.
-       Lay it out deliberately instead: both arrows together on one row,
-       full-width CTA beneath. */
+    /* All three controls on one line: arrows sized to their content, the
+       CTA taking whatever's left. nowrap is what stops them stacking --
+       an earlier version let the CTA span a full row of its own, which
+       pushed the arrows above and below it. */
     .controls{
       margin-top:14px;
-      gap:12px;
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      padding:0 16px;
+      gap:10px;
+      flex-wrap:nowrap;
+      padding:0 14px;
     }
-    .nav{width:100%;height:46px;border-radius:8px;}
+    .nav{
+      flex:0 0 auto;
+      width:46px;height:46px;
+      border-radius:8px;
+    }
     .cta{
-      grid-column:1 / -1;
+      flex:1 1 auto;
+      min-width:0;
       text-align:center;
-      padding:15px 12px;
-      font-size:12px;
-      letter-spacing:.03em;
+      padding:15px 8px;
+      font-size:11.5px;
+      letter-spacing:.02em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
+    .cta-full{display:none;}
+    .cta-short{display:inline;}
     /* Expanding "Read more" would otherwise grow the card and push the
        controls back below the clip line. Scroll the quote inside the card
        instead so overall height stays fixed. */
@@ -206,7 +215,14 @@
 
   <div class="controls">
     <button class="nav" id="prev" type="button" aria-label="Previous reviews">&#8249;</button>
-    <a class="cta" id="viewall" href="#" target="_blank" rel="noopener noreferrer">View All Google Reviews</a>
+    <!-- Label shortens to "All Reviews" on narrow screens so the row fits
+         on one line; the full wording stays on desktop. Attribution isn't
+         lost either way -- every card carries "Review via Google". -->
+    <a class="cta" id="viewall" href="#" target="_blank" rel="noopener noreferrer"
+       aria-label="View all Google reviews">
+      <span class="cta-full">View All Google Reviews</span>
+      <span class="cta-short">All Reviews</span>
+    </a>
     <button class="nav" id="next" type="button" aria-label="Next reviews">&#8250;</button>
   </div>
 </section>
