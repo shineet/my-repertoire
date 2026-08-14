@@ -36,17 +36,21 @@
 
   var CSS = [
     'shine-reviews{',
-    '  --sr-panel:#141210; --sr-cream:#f4efe6; --sr-muted:#a99f8e;',
+    '  --sr-ink:#000; --sr-panel:#141210; --sr-cream:#f4efe6; --sr-muted:#a99f8e;',
     '  --sr-gold:#c9a24a; --sr-gold-soft:#e3c77e; --sr-line:rgba(201,162,74,.28);',
     '  --sr-gap:18px;',
-    /* Transparent, not black: the host inherits whatever background the Wix
-       section already has, so it drops into the existing dark strip without
-       painting a hard black band across it. */
-    '  display:none; background:transparent;',
+    /* Paints its own black background, exactly as the old iframe did via
+       html,body{background:#000}. Transparent was tried first so the host
+       would inherit the Wix section colour -- but the section it sits in is
+       white, so the whole rail rendered on white. If the surrounding section
+       is ever made dark, this can go back to transparent. */
+    '  display:none; background:var(--sr-ink);',
     '  font-family:"Montserrat","Avenir Next","Segoe UI",Helvetica,Arial,sans-serif;',
     '  color:var(--sr-cream); -webkit-font-smoothing:antialiased;',
     '}',
-    'shine-reviews[data-ready]{display:block;padding:8px 0 16px;}',
+    /* Vertical padding so the black reads as a deliberate band rather than a
+       tight box. The iframe got this for free from its fixed 640px height. */
+    'shine-reviews[data-ready]{display:block;padding:34px 0 30px;}',
     'shine-reviews *{box-sizing:border-box;}',
 
     'shine-reviews .sr-head{text-align:center;padding:0 20px 22px;}',
@@ -133,6 +137,7 @@
        iframe there is nothing to clip against. */
     '@media(max-width:600px){',
     '  shine-reviews{--sr-gap:12px;}',
+    '  shine-reviews[data-ready]{padding:24px 0 22px;}',
     '  shine-reviews .sr-card{flex:0 0 88%;padding:18px 18px 15px;min-height:0;gap:9px;}',
     '  shine-reviews .sr-track{padding:0 16px;}',
     '  shine-reviews .sr-head{padding-bottom:14px;}',
