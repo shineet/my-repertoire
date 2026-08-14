@@ -194,6 +194,54 @@
     return n;
   }
 
+  // Walks a JSON-LD payload, visiting every object including @graph members,
+  // so an aggregateRating is found wherever the page happens to nest it.
+  function walkLd(node, fn) {
+    if (Array.isArray(node)) { node.forEach(function (n) { walkLd(n, fn); }); return; }
+    if (!node || typeof node !== 'object') return;
+    fn(node);
+    if (node['@graph']) walkLd(node['@graph'], fn);
+  }
+
+  /*
+   * Keeps the page's EXISTING aggregateRating in step with the live count.
+   *
+   * The number in Wix's JSON-LD is typed by hand, so it goes stale the moment
+   * a review lands -- it had already drifted to 175 against a live 176, and a
+   * republish silently reverted it because Wix keeps the SEO draft and the
+   * published copy separately.
+   *
+   * This does NOT add structured data. A second aggregateRating would compete
+   * with the page's own and is exactly what we were told to avoid. It edits
+   * the block the page already has, in place. Same approach the city pages
+   * already use, and Google reads structured data from the rendered DOM.
+   */
+  function syncSchema(summary) {
+    try {
+      if (!summary || !summary.totalReviewCount) return;
+      var count = String(summary.totalReviewCount);
+      var rating = summary.averageRating != null
+        ? String(Number(summary.averageRating))
+        : null;
+
+      var blocks = document.querySelectorAll('script[type="application/ld+json"]');
+      for (var i = 0; i < blocks.length; i++) {
+        var node = blocks[i], data;
+        try { data = JSON.parse(node.textContent); } catch (e) { continue; }
+
+        var changed = false;
+        walkLd(data, function (obj) {
+          var ar = obj.aggregateRating;
+          if (!ar || typeof ar !== 'object') return;
+          if (String(ar.reviewCount) !== count) { ar.reviewCount = count; changed = true; }
+          if (rating && String(ar.ratingValue) !== rating) { ar.ratingValue = rating; changed = true; }
+        });
+
+        if (changed) node.textContent = JSON.stringify(data);
+      }
+    } catch (e) { /* schema stays as authored -- never break the page over this */ }
+  }
+
   function buildCard(rev) {
     var card = el('article', 'sr-card');
     var quoteText = rev.quote || '';
@@ -315,7 +363,13 @@
     fetch(ENDPOINT)
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (!data || !data.configured || !Array.isArray(data.reviews) || !data.reviews.length) {
+        if (!data) return;
+
+        // Runs before the rail check on purpose: the schema must track the
+        // live count even on a day when no review cards are rendered.
+        syncSchema(data.summary);
+
+        if (!data.configured || !Array.isArray(data.reviews) || !data.reviews.length) {
           return; // stays hidden -- never render an empty or broken rail
         }
 
