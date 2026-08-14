@@ -29,6 +29,10 @@
   if (window.customElements && customElements.get(TAG)) return;
 
   var ENDPOINT = 'https://www.texasmentalist.com/_functions/reviews';
+  // Authoritative live count: the same endpoint the Wix pages and the
+  // Vercel pages already read, fed by site-settings.reviewCount, which is
+  // what Shine's desktop updater writes. One update, every surface.
+  var COUNT_ENDPOINT = 'https://www.texasmentalist.com/_functions/reviewCount';
   var CLAMP_AT = 240; // characters before we offer "Read more"
   var GAP = 18;       // must match --sr-gap below; used for scroll stepping
 
@@ -360,14 +364,40 @@
       if (e.key === 'ArrowLeft') { e.preventDefault(); track.scrollBy({ left: -step(), behavior: 'smooth' }); }
     });
 
-    fetch(ENDPOINT)
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
+    var asJson = function (r) { return r.json(); };
+    var orNull = function () { return null; };
+
+    Promise.all([
+      fetch(ENDPOINT).then(asJson).catch(orNull),
+      fetch(COUNT_ENDPOINT).then(asJson).catch(orNull)
+    ])
+      .then(function (res) {
+        var data = res[0];
         if (!data) return;
+
+        var s = data.summary || {};
+
+        /*
+         * The review count has TWO stores on this site and they are not the
+         * same record:
+         *   site-settings.reviewCount        <- what the desktop updater
+         *                                      writes, and what every other
+         *                                      page already reads via
+         *                                      /_functions/reviewCount
+         *   GoogleReviewsSummary.totalReviewCount <- seeded once when the
+         *                                      carousel was built, never
+         *                                      updated since
+         * They agreed only because the summary was seeded with the count of
+         * the day. Trusting the summary would leave this carousel and the
+         * homepage schema stale the moment the updater runs, so the live
+         * count wins and the summary is only a fallback.
+         */
+        var live = res[1] && Number(res[1].reviewCount);
+        if (isFinite(live) && live > 0) s.totalReviewCount = live;
 
         // Runs before the rail check on purpose: the schema must track the
         // live count even on a day when no review cards are rendered.
-        syncSchema(data.summary);
+        syncSchema(s);
 
         if (!data.configured || !Array.isArray(data.reviews) || !data.reviews.length) {
           return; // stays hidden -- never render an empty or broken rail
@@ -375,7 +405,6 @@
 
         data.reviews.forEach(function (rev) { track.appendChild(buildCard(rev)); });
 
-        var s = data.summary || {};
         summary.textContent = '';
         var label = s.totalReviewCount
           ? s.totalReviewCount + ' Five-Star Google Reviews'
