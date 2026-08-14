@@ -54,6 +54,22 @@
   .wrap{max-width:960px;margin:0 auto;padding:0 32px;}
   .eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:600;}
   .ribbon{background:#000;color:var(--gold-soft);text-align:center;font-size:11px;letter-spacing:.28em;text-transform:uppercase;padding:9px 12px;border-bottom:1px solid var(--line);}
+  /* The ribbon's domain is a real link home. These pages are reached from the
+     Wix menu in a new tab, so browser Back does nothing -- without this there
+     is no way back to the main site except scrolling to the footer. Generous
+     padding with a negative margin enlarges the tap target without moving the
+     ribbon's layout. */
+  .ribbon a{
+    color:var(--gold-soft);text-decoration:none;
+    border-bottom:1px solid rgba(201,162,74,.45);
+    display:inline-block;padding:8px 4px;margin:-8px 0;
+  }
+  .ribbon a:hover{color:#fff;border-bottom-color:var(--gold-soft);}
+  .ribbon a:focus-visible{outline:2px solid var(--gold-soft);outline-offset:2px;}
+  @media(max-width:600px){
+    .ribbon{letter-spacing:.16em;padding:11px 10px;}
+  }
+
 
   .hero{padding:72px 0 56px;background:radial-gradient(1200px 500px at 80% -10%, rgba(201,162,74,.16), transparent 60%),linear-gradient(180deg,#100e0c,#1a1714);border-bottom:1px solid var(--line);}
   .hero .wrap{display:flex;gap:40px;align-items:center;flex-wrap:wrap;}
@@ -106,7 +122,7 @@
 </head>
 <body>
 
-<div class="ribbon">Corporate Events &nbsp;·&nbsp; texasmentalist.com &nbsp;·&nbsp; San Antonio, Texas</div>
+<div class="ribbon">Corporate Events &nbsp;·&nbsp; <a href="https://www.texasmentalist.com/" aria-label="Back to texasmentalist.com home page">&#8592; texasmentalist.com</a> &nbsp;·&nbsp; San Antonio, Texas</div>
 
 <!-- HERO -->
 <div class="hero">
