@@ -143,6 +143,7 @@
     '  shine-reviews .sr-head{padding-bottom:14px;}',
     '  shine-reviews .sr-head h2{font-size:clamp(22px,6.4vw,28px);}',
     '  shine-reviews .sr-rating{margin-top:8px;font-size:13px;}',
+    '  shine-reviews .sr-avg{display:none;}',
     '  shine-reviews .sr-card blockquote{font-size:14px;line-height:1.5;}',
     '  shine-reviews .sr-card blockquote.sr-clamped{-webkit-line-clamp:4;}',
     '  shine-reviews .sr-meta{padding-top:9px;}',
@@ -326,8 +327,12 @@
           ? s.totalReviewCount + ' Five-Star Google Reviews'
           : 'Five-Star Google Reviews';
         summary.appendChild(el('strong', null, label));
+        // Hidden on mobile (see .sr-avg): the line wrapped onto two rows
+        // and the rating collided with the Wix chat bubble. Five gold stars
+        // sit immediately beside it, so nothing is really lost.
         if (s.averageRating) {
-          summary.appendChild(document.createTextNode(
+          summary.appendChild(el(
+            'span', 'sr-avg',
             ' ·  ' + Number(s.averageRating).toFixed(1) + ' average rating'
           ));
         }
