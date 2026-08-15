@@ -55,6 +55,19 @@
     /* Vertical padding so the black reads as a deliberate band rather than a
        tight box. The iframe got this for free from its fixed 640px height. */
     'shine-reviews[data-ready]{display:block;padding:34px 0 30px;}',
+    /* Full-bleed black, edge to edge.
+       The Wix section this sits in is a centred content column, so the host's
+       own background only ever covered that column and the page showed white
+       either side of it on desktop.
+       box-shadow + clip-path rather than the usual width:100vw / negative
+       margin trick: box-shadow does not participate in layout, so it cannot
+       introduce a horizontal scrollbar, and 100vw would overshoot by the
+       scrollbar's width on desktop. The clip keeps the spread to the sides
+       only, so it never bleeds into the sections above or below. */
+    'shine-reviews[data-ready]{',
+    '  box-shadow:0 0 0 100vmax var(--sr-ink);',
+    '  clip-path:inset(0 -100vmax);',
+    '}',
     'shine-reviews *{box-sizing:border-box;}',
 
     'shine-reviews .sr-head{text-align:center;padding:0 20px 22px;}',
