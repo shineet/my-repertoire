@@ -1,40 +1,40 @@
 {
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "houston.texasmentalist.com" }],
+      "destination": "/houston-corporate-mentalist"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "dallas.texasmentalist.com" }],
+      "destination": "/dallas-corporate-mentalist"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "sanantonio.texasmentalist.com" }],
+      "destination": "/san-antonio-corporate-mentalist"
+    }
+  ],
+
   "redirects": [
     {
       "source": "/",
       "has": [{ "type": "host", "value": "press.texasmentalist.com" }],
       "destination": "/press-kit",
-      "permanent": false
+      "permanent": true
     },
     {
       "source": "/",
       "has": [{ "type": "host", "value": "private.texasmentalist.com" }],
       "destination": "/private-events",
-      "permanent": false
+      "permanent": true
     },
     {
       "source": "/",
       "has": [{ "type": "host", "value": "faq.texasmentalist.com" }],
       "destination": "/magician-vs-mentalist",
-      "permanent": false
-    },
-    {
-      "source": "/",
-      "has": [{ "type": "host", "value": "dallas.texasmentalist.com" }],
-      "destination": "/dallas-corporate-mentalist",
-      "permanent": false
-    },
-    {
-      "source": "/",
-      "has": [{ "type": "host", "value": "sanantonio.texasmentalist.com" }],
-      "destination": "/san-antonio-corporate-mentalist",
-      "permanent": false
-    },
-    {
-      "source": "/",
-      "has": [{ "type": "host", "value": "houston.texasmentalist.com" }],
-      "destination": "/houston-corporate-mentalist",
-      "permanent": false
+      "permanent": true
     }
   ]
 }
