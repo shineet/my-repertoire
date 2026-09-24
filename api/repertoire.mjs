@@ -38,7 +38,7 @@ const DB = 'https://my-repertoire-76b4b-default-rtdb.firebaseio.com';
 // and '/' because both load() and save() work on the root, so nothing finer
 // needs exposing -- and an allowlist means a bug in the client cannot ask for
 // something unexpected.
-const ALLOWED = ['/', '/routines', '/gigs', '/chargeables'];
+const ALLOWED = ['/', '/routines', '/gigs', '/chargeables', '/mystio/routines', '/mystio/favourites'];
 
 /* Session token: a one-way hash of the password and the server-side secret.
  * Worth nothing if intercepted -- it cannot be turned back into the password --
@@ -58,6 +58,22 @@ function tokenValid(t) {
   const b = Buffer.from(makeToken());
   // Length check first: timingSafeEqual throws on a mismatch rather than
   // returning false, which would turn a wrong-length token into a 500.
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+/* MystIO's own token, scoped to the /mystio node only.
+ *
+ * The MystIO iOS app runs on a tester's phone too, and my-repertoire holds
+ * client names, dates and method notes. So MystIO gets a SEPARATE secret --
+ * MYSTIO_SYNC_TOKEN, a plain shared string, not derived from the repertoire
+ * password -- and the two actions it can call only ever touch /mystio. It can
+ * publish its routine list and read which routines to favourite, and nothing
+ * else. A tester without the token can do neither. */
+function mystioTokenValid(t) {
+  const real = process.env.MYSTIO_SYNC_TOKEN;
+  if (!t || typeof t !== 'string' || !real) return false;
+  const a = Buffer.from(t);
+  const b = Buffer.from(String(real));
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
@@ -155,6 +171,27 @@ export default async function handler(req, res) {
         return;
       }
       res.status(200).json({ token: makeToken() });
+      return;
+    }
+
+    // MystIO's scoped actions, on their own token. Kept BEFORE the repertoire
+    // token check so MystIO never needs the repertoire password, and can only
+    // ever reach the /mystio node.
+    if (body.action === 'mystio_publish') {
+      if (!mystioTokenValid(body.token)) {
+        await new Promise((r2) => setTimeout(r2, 400));
+        res.status(401).json({ error: 'Not authorised.' }); return;
+      }
+      await firebase('/mystio/routines', 'PUT', body.data);
+      res.status(200).json({ ok: true });
+      return;
+    }
+    if (body.action === 'mystio_favourites') {
+      if (!mystioTokenValid(body.token)) {
+        await new Promise((r2) => setTimeout(r2, 400));
+        res.status(401).json({ error: 'Not authorised.' }); return;
+      }
+      res.status(200).json({ data: await firebase('/mystio/favourites', 'GET') });
       return;
     }
 
