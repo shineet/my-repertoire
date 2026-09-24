@@ -216,6 +216,10 @@
     let reordering = false;
     let reorderingGig = false;
     let saveTimer = null;
+    // MystIO app routines, fetched on demand from /mystio/routines, and a small
+    // status line for the MystIO panel.
+    let MYSTIO = null;
+    let mystioMsg = '';
     function debounceSave() {
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => save(), 1200);
@@ -344,6 +348,9 @@
         srcNote: g.srcNote || null,
         srcRoutines: Array.isArray(g.srcRoutines) ? g.srcRoutines : null,
         packed: (g.packed && typeof g.packed === 'object' && !Array.isArray(g.packed)) ? g.packed : {},
+        // Which MystIO app routines this gig uses. Sent to MystIO so it can
+        // favourite exactly these.
+        mystioIds: Array.isArray(g.mystioIds) ? g.mystioIds : [],
         // Set remotely by the Booking App's "Mark as Done" (see markRepertoireGigCompleted
         // in gig-dashboard.html) via a direct write to this same Firebase DB, keyed by
         // srcId. Forces a same-day (or future-dated) gig straight into Past Gigs instead
@@ -750,6 +757,26 @@
       </div>
     </div>` : '';
 
+        const mList = MYSTIO && Array.isArray(MYSTIO.routines) ? MYSTIO.routines
+                      : (MYSTIO && MYSTIO.routines ? Object.values(MYSTIO.routines) : null);
+        const mystioPanel = !grs.length ? '' : `<div style="margin-top:22px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+        <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;">📱 MystIO routines</div>
+        ${btn(mList ? 'Refresh' : 'Load', 'data-a="mystio-load"', 'ot', true)}
+      </div>
+      <div style="font-size:11px;color:#555E7A;margin-bottom:9px;line-height:1.5;">Tick the MystIO app routines this gig uses, then Send — they become the favourites in MystIO, replacing the current ones.</div>
+      ${!mList ? `<div style="font-size:13px;color:#555E7A;padding:12px 14px;background:#0F1120;border-radius:10px;border:1px dashed #1E2140;">Tap Load to pull your routine list from the MystIO app. Publish it once from MystIO Settings → Booking sync first.</div>`
+        : (!mList.length ? `<div style="font-size:13px;color:#555E7A;padding:12px 14px;background:#0F1120;border-radius:10px;border:1px dashed #1E2140;">Nothing published from MystIO yet. In MystIO: Settings → Booking sync → Publish my routines.</div>`
+        : `<div style="border-radius:10px;border:1px solid #1E2140;overflow:hidden;">${mList.map((m, i) => { const on = (g.mystioIds || []).includes(m.id); return `<div data-a="mystio-toggle" data-v="${esc(m.id)}" style="display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:${i < mList.length - 1 ? '1px solid #1E2140' : 'none'};background:${on ? '#4E9C8112' : 'transparent'};cursor:pointer;">
+        <div style="width:19px;height:19px;border-radius:5px;border:1.5px solid ${on ? '#4E9C81' : '#2E3260'};background:${on ? '#4E9C81' : 'transparent'};color:#0B0D1A;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">${on ? '✓' : ''}</div>
+        <div style="flex:1;min-width:0;font-size:13px;color:#F0EDE6;">${esc(m.name)}${m.source === 'default' ? ' <span style="color:#555E7A;font-size:11px;">(default)</span>' : ''}</div>
+      </div>`; }).join('')}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px;flex-wrap:wrap;">
+        <div style="font-size:12px;color:#888CAA;">${(g.mystioIds || []).length} selected${mystioMsg ? ` · <span style="color:#4E9C81;">${esc(mystioMsg)}</span>` : ''}</div>
+        ${btn('Send to MystIO', 'data-a="mystio-send"', 'go')}
+      </div>`)}
+    </div>`;
+
         return `<div style="padding:16px 20px;">
     <div style="margin-bottom:18px;">
       <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px;">${
@@ -780,6 +807,7 @@
 
         }
     ${propsPanel}
+    ${mystioPanel}
     ${notePanel}
   </div>`
         ;
@@ -1169,6 +1197,36 @@
             await save();
             render();
             break;
+        case 'mystio-load':
+            mystioMsg = '';
+            try { MYSTIO = (await fbGet('/mystio/routines')) || { routines: [] }; }
+            catch (err) { MYSTIO = { routines: [] }; mystioMsg = 'Load failed'; }
+            render();
+            break;
+        case 'mystio-toggle':
+            {
+                const gg = cg();
+                if (!gg) break;
+                gg.mystioIds = gg.mystioIds || [];
+                gg.mystioIds = gg.mystioIds.includes(v)
+                    ? gg.mystioIds.filter(x => x !== v)
+                    : [...gg.mystioIds, v];
+                mystioMsg = '';
+                await save();
+                render();
+                break;
+            }
+        case 'mystio-send':
+            {
+                const gg = cg();
+                if (!gg) break;
+                try {
+                    await fbPut('/mystio/favourites', { ids: gg.mystioIds || [], gig: gg.name || '', updatedAt: Date.now() });
+                    mystioMsg = 'Sent — favourites set in MystIO';
+                } catch (err) { mystioMsg = 'Send failed'; }
+                render();
+                break;
+            }
         case 'tog-charge':
             {
                 const k = v.toLowerCase();
